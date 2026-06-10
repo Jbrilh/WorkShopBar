@@ -37,11 +37,16 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
   const { id } = await params;
 
-  // Soft delete — preserve SaleItem history
-  await prisma.menuItem.update({
-    where: { id },
-    data: { isActive: false },
-  });
+  const saleItemCount = await prisma.saleItem.count({ where: { menuItemId: id } });
+
+  if (saleItemCount === 0) {
+    // No sale history — hard delete (remove inventory tracking first)
+    await prisma.inventoryItem.deleteMany({ where: { menuItemId: id } });
+    await prisma.menuItem.delete({ where: { id } });
+  } else {
+    // Has sale history — soft delete to preserve records
+    await prisma.menuItem.update({ where: { id }, data: { isActive: false } });
+  }
 
   return NextResponse.json({ success: true });
 }

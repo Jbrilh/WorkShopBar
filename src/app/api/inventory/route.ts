@@ -22,7 +22,9 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const parsed = z.object({
-    menuItemId: z.string(),
+    name: z.string().min(1),
+    price: z.number().positive(),
+    categoryId: z.string().optional(),
     quantity: z.number().int().min(0).default(0),
     unit: z.string().default("units"),
     lowThreshold: z.number().int().min(0).default(5),
@@ -30,9 +32,15 @@ export async function POST(request: Request) {
 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  const { name, price, categoryId, quantity, unit, lowThreshold } = parsed.data;
+
+  const menuItem = await prisma.menuItem.create({
+    data: { name, price, categoryId: categoryId ?? null, isActive: true },
+  });
+
   const item = await prisma.inventoryItem.create({
-    data: parsed.data,
-    include: { menuItem: true },
+    data: { menuItemId: menuItem.id, quantity, unit, lowThreshold },
+    include: { menuItem: { include: { category: true } } },
   });
 
   return NextResponse.json(item, { status: 201 });

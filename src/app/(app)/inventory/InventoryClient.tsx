@@ -19,10 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
 import { Edit2, Trash2, Plus } from "lucide-react";
 
-interface MenuItem {
+interface Category {
   id: string;
   name: string;
-  category: { name: string } | null;
 }
 
 interface InventoryItem {
@@ -46,14 +45,13 @@ function stockStatus(item: InventoryItem): "ok" | "low" | "out" {
 
 interface Props {
   initialItems: InventoryItem[];
-  untrackedItems: MenuItem[];
+  categories: Category[];
 }
 
-export function InventoryClient({ initialItems, untrackedItems }: Props) {
+export function InventoryClient({ initialItems, categories }: Props) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [items, setItems] = useState(initialItems);
-  const [untracked, setUntracked] = useState(untrackedItems);
 
   // Edit dialog
   const [editing, setEditing] = useState<InventoryItem | null>(null);
@@ -62,7 +60,7 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
 
   // Add dialog
   const [addOpen, setAddOpen] = useState(false);
-  const [addForm, setAddForm] = useState({ menuItemId: "", quantity: "0", unit: "units", lowThreshold: "5" });
+  const [addForm, setAddForm] = useState({ name: "", price: "", categoryId: "", quantity: "0", unit: "units", lowThreshold: "5" });
   const [addLoading, setAddLoading] = useState(false);
 
   function openEdit(item: InventoryItem) {
@@ -98,7 +96,6 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
     const res = await fetch(`/api/inventory/${item.id}`, { method: "DELETE" });
     if (res.ok) {
       setItems((prev) => prev.filter((i) => i.id !== item.id));
-      setUntracked((prev) => [...prev, { id: item.menuItem.id, name: item.menuItem.name, category: item.menuItem.category }]);
       toast({ title: t("inventory.trackingRemoved") });
     } else {
       toast({ title: t("common.error"), variant: "destructive" });
@@ -106,13 +103,15 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
   }
 
   async function handleAdd() {
-    if (!addForm.menuItemId) return;
+    if (!addForm.name || !addForm.price) return;
     setAddLoading(true);
     const res = await fetch("/api/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        menuItemId: addForm.menuItemId,
+        name: addForm.name,
+        price: parseFloat(addForm.price),
+        categoryId: addForm.categoryId || undefined,
         quantity: parseInt(addForm.quantity),
         unit: addForm.unit,
         lowThreshold: parseInt(addForm.lowThreshold),
@@ -121,8 +120,7 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
     if (res.ok) {
       const created = await res.json();
       setItems((prev) => [...prev, created]);
-      setUntracked((prev) => prev.filter((m) => m.id !== addForm.menuItemId));
-      setAddForm({ menuItemId: "", quantity: "0", unit: "units", lowThreshold: "5" });
+      setAddForm({ name: "", price: "", categoryId: "", quantity: "0", unit: "units", lowThreshold: "5" });
       setAddOpen(false);
       toast({ title: t("inventory.itemAdded") });
     } else {
@@ -139,12 +137,10 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
         <h1 className="text-2xl font-bold">{t("inventory.title")}</h1>
         <div className="flex items-center gap-3">
           {lowCount > 0 && <Badge variant="warning">{lowCount} {t("inventory.needsAttention")}</Badge>}
-          {untracked.length > 0 && (
-            <Button onClick={() => setAddOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("inventory.trackItem")}
-            </Button>
-          )}
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("menu.addItem")}
+          </Button>
         </div>
       </div>
 
@@ -271,36 +267,61 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("inventory.trackNew")}</DialogTitle>
+            <DialogTitle>{t("menu.addItem")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>{t("inventory.menuItem")}</Label>
-              <Select value={addForm.menuItemId} onValueChange={(v) => setAddForm({ ...addForm, menuItemId: v })}>
-                <SelectTrigger><SelectValue placeholder={t("inventory.selectItem")} /></SelectTrigger>
-                <SelectContent>
-                  {untracked.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>{t("menu.name")}</Label>
+              <Input
+                value={addForm.name}
+                onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                placeholder="e.g. Tequila (shot)"
+              />
             </div>
-            <div className="space-y-2">
-              <Label>{t("inventory.startingQty")}</Label>
-              <Input type="number" min="0" value={addForm.quantity} onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t("menu.price")}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={addForm.price}
+                  onChange={(e) => setAddForm({ ...addForm, price: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("menu.category")}</Label>
+                <Select value={addForm.categoryId} onValueChange={(v) => setAddForm({ ...addForm, categoryId: v })}>
+                  <SelectTrigger><SelectValue placeholder={t("menu.selectCategory")} /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>{t("inventory.unit")}</Label>
-              <Input placeholder="bottles, pints, units..." value={addForm.unit} onChange={(e) => setAddForm({ ...addForm, unit: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("inventory.lowAlert")}</Label>
-              <Input type="number" min="0" value={addForm.lowThreshold} onChange={(e) => setAddForm({ ...addForm, lowThreshold: e.target.value })} />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>{t("inventory.startingQty")}</Label>
+                <Input type="number" min="0" value={addForm.quantity} onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("inventory.unit")}</Label>
+                <Input placeholder="bottles, pints..." value={addForm.unit} onChange={(e) => setAddForm({ ...addForm, unit: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("inventory.lowAlert")}</Label>
+                <Input type="number" min="0" value={addForm.lowThreshold} onChange={(e) => setAddForm({ ...addForm, lowThreshold: e.target.value })} />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>{t("common.cancel")}</Button>
-            <Button onClick={handleAdd} disabled={addLoading || !addForm.menuItemId}>{addLoading ? t("common.saving") : t("common.add")}</Button>
+            <Button onClick={handleAdd} disabled={addLoading || !addForm.name || !addForm.price}>
+              {addLoading ? t("common.saving") : t("common.add")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
