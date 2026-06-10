@@ -70,6 +70,10 @@ const translations = {
     "sales.voiding": "Voiding...",
     "sales.voidConfirm": "Void this sale and restore inventory?",
     "sales.voided": "Sale voided",
+    "sales.openTabAlert": "has an open tab",
+    "sales.addToExistingTab": "Add to existing tab",
+    "sales.newTab": "New tab",
+    "sales.addingToTab": "Adding to tab...",
     // customers
     "customers.title": "Customers",
     "customers.addCustomer": "Add Customer",
@@ -254,6 +258,10 @@ const translations = {
     "sales.voiding": "በሰርዛ ላይ...",
     "sales.voidConfirm": "ሽያጩን ሰርዞ ክምችቱን ይመልሳሉ?",
     "sales.voided": "ሽያጩ ተሰርዟል",
+    "sales.openTabAlert": "ያልተከፈለ ሒሳብ አለ",
+    "sales.addToExistingTab": "ወደ ነባር ሒሳብ ጨምር",
+    "sales.newTab": "አዲስ ሒሳብ",
+    "sales.addingToTab": "ወደ ሒሳብ በመጨመር ላይ...",
     // customers
     "customers.title": "ደንበኞች",
     "customers.addCustomer": "ደንበኛ ጨምር",

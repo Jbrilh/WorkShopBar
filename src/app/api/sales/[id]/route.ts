@@ -27,6 +27,10 @@ const patchSchema = z.object({
   status: z.enum(["OPEN", "PAID"]).optional(),
   notes: z.string().optional(),
   addPayment: z.number().positive().optional(),
+  addItems: z.array(z.object({
+    menuItemId: z.string(),
+    quantity: z.number().int().positive(),
+  })).optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +42,66 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { status, notes, addPayment } = parsed.data;
+  const { status, notes, addPayment, addItems } = parsed.data;
+
+  // Add items to existing open tab
+  if (addItems && addItems.length > 0) {
+    const menuItems = await prisma.menuItem.findMany({
+      where: { id: { in: addItems.map((i) => i.menuItemId) }, isActive: true },
+    });
+    const priceMap = Object.fromEntries(menuItems.map((m) => [m.id, Number(m.price)]));
+
+    const inventoryItems = await prisma.inventoryItem.findMany({
+      where: { menuItemId: { in: addItems.map((i) => i.menuItemId) } },
+      include: { menuItem: { select: { name: true } } },
+    });
+    const stockMap = Object.fromEntries(
+      inventoryItems.map((i) => [i.menuItemId, { qty: Number(i.quantity), name: i.menuItem.name }])
+    );
+    const outOfStock = addItems.filter((item) => {
+      const stock = stockMap[item.menuItemId];
+      return stock !== undefined && stock.qty < item.quantity;
+    });
+    if (outOfStock.length > 0) {
+      const names = outOfStock.map((item) => stockMap[item.menuItemId]?.name ?? item.menuItemId).join(", ");
+      return NextResponse.json({ error: `Not enough stock: ${names}` }, { status: 400 });
+    }
+
+    const additionalTotal = addItems.reduce(
+      (sum, item) => sum + (priceMap[item.menuItemId] ?? 0) * item.quantity,
+      0
+    );
+
+    const sale = await prisma.$transaction(async (tx) => {
+      await tx.saleItem.createMany({
+        data: addItems.map((item) => ({
+          saleId: id,
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          unitPrice: priceMap[item.menuItemId],
+          subtotal: priceMap[item.menuItemId] * item.quantity,
+        })),
+      });
+      const updated = await tx.sale.update({
+        where: { id },
+        data: { totalAmount: { increment: additionalTotal } },
+        include: {
+          customer: true,
+          items: { include: { menuItem: true } },
+          payments: { orderBy: { createdAt: "asc" } },
+        },
+      });
+      for (const item of addItems) {
+        await tx.inventoryItem.updateMany({
+          where: { menuItemId: item.menuItemId },
+          data: { quantity: { decrement: item.quantity } },
+        });
+      }
+      return updated;
+    });
+
+    return NextResponse.json(sale);
+  }
 
   const current = await prisma.sale.findUnique({
     where: { id },

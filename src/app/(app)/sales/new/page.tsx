@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, AlertTriangle } from "lucide-react";
 
 interface MenuItem {
   id: string;
@@ -26,6 +26,13 @@ interface CartItem {
   quantity: number;
 }
 
+interface OpenTab {
+  id: string;
+  totalAmount: number;
+  amountPaid: number;
+  items: { id: string; quantity: number; menuItem: { name: string } }[];
+}
+
 type PaymentMode = "PAID" | "PARTIAL" | "OPEN";
 
 export default function NewSalePage() {
@@ -34,6 +41,8 @@ export default function NewSalePage() {
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [openTab, setOpenTab] = useState<OpenTab | null>(null);
+  const [addToExisting, setAddToExisting] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("PAID");
   const [partialAmount, setPartialAmount] = useState("");
@@ -47,6 +56,16 @@ export default function NewSalePage() {
       .then(setMenuItems);
   }, []);
 
+  useEffect(() => {
+    if (!customerId) { setOpenTab(null); setAddToExisting(false); return; }
+    fetch(`/api/customers/${customerId}/open-tab`)
+      .then((r) => r.json())
+      .then((data) => {
+        setOpenTab(data.sale ?? null);
+        if (data.sale) setAddToExisting(true);
+      });
+  }, [customerId]);
+
   const priceMap = Object.fromEntries(menuItems.map((m) => [m.id, m.price]));
   const total = cart.reduce((sum, item) => sum + (priceMap[item.menuItemId] ?? 0) * item.quantity, 0);
 
@@ -57,14 +76,31 @@ export default function NewSalePage() {
       return;
     }
 
-    const amountPaid = paymentMode === "PARTIAL" ? parseFloat(partialAmount) : 0;
-    if (paymentMode === "PARTIAL" && (!amountPaid || amountPaid <= 0 || amountPaid >= total)) {
-      toast({ title: t("sales.remainingOnTab"), variant: "destructive" });
-      return;
-    }
-
     setLoading(true);
     try {
+      if (addToExisting && openTab) {
+        // Append items to the existing open tab
+        const res = await fetch(`/api/sales/${openTab.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ addItems: cart }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error ?? "Failed to update tab");
+        }
+        toast({ title: t("sales.addToExistingTab") });
+        router.push("/tabs");
+        return;
+      }
+
+      const amountPaid = paymentMode === "PARTIAL" ? parseFloat(partialAmount) : 0;
+      if (paymentMode === "PARTIAL" && (!amountPaid || amountPaid <= 0 || amountPaid >= total)) {
+        toast({ title: t("sales.remainingOnTab"), variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,6 +161,47 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
+        {/* Open tab banner */}
+        {openTab && (
+          <Card className="border-yellow-300 bg-yellow-50">
+            <CardContent className="py-4 px-5 space-y-3">
+              <div className="flex items-center gap-2 text-yellow-800 font-medium">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{t("sales.openTabAlert")} — {formatCurrency(Number(openTab.totalAmount) - Number(openTab.amountPaid))} {t("sales.owed")}</span>
+              </div>
+              <ul className="text-sm text-yellow-700 space-y-0.5 pl-6">
+                {openTab.items.map((item) => (
+                  <li key={item.id}>{item.quantity}x {item.menuItem.name}</li>
+                ))}
+              </ul>
+              <div className="flex gap-2 pl-6">
+                <button
+                  type="button"
+                  onClick={() => setAddToExisting(true)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium border-2 transition-colors ${
+                    addToExisting
+                      ? "border-yellow-500 bg-yellow-100 text-yellow-800"
+                      : "border-border bg-white text-muted-foreground hover:border-gray-300"
+                  }`}
+                >
+                  {t("sales.addToExistingTab")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddToExisting(false)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium border-2 transition-colors ${
+                    !addToExisting
+                      ? "border-gray-400 bg-white text-gray-700"
+                      : "border-border bg-white text-muted-foreground hover:border-gray-300"
+                  }`}
+                >
+                  {t("sales.newTab")}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Items */}
         <Card>
           <CardHeader>
@@ -139,8 +216,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Payment status + total */}
-        <Card>
+        {/* Payment status + total — hidden when adding to existing tab */}
+        <Card className={addToExisting ? "opacity-50 pointer-events-none" : ""}>
           <CardHeader>
             <CardTitle className="text-base">{t("sales.payment")}</CardTitle>
           </CardHeader>
@@ -247,7 +324,12 @@ export default function NewSalePage() {
 
         <Button type="submit" className="w-full" size="lg" disabled={loading || cart.length === 0}>
           <ShoppingCart className="h-4 w-4 mr-2" />
-          {loading ? t("sales.recording") : `${t("sales.recordSale")}${cart.length > 0 ? ` — ${formatCurrency(total)}` : ""}`}
+          {loading
+            ? (addToExisting ? t("sales.addingToTab") : t("sales.recording"))
+            : addToExisting
+              ? `${t("sales.addToExistingTab")}${cart.length > 0 ? ` — ${formatCurrency(total)}` : ""}`
+              : `${t("sales.recordSale")}${cart.length > 0 ? ` — ${formatCurrency(total)}` : ""}`
+          }
         </Button>
       </form>
     </div>
