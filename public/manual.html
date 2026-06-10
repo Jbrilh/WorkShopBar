@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WorkShopBar — User Manual</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 11pt;
+      line-height: 1.65;
+      color: #1a1a1a;
+      background: #fff;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 40px 48px;
+    }
+
+    /* ── Cover ── */
+    .cover {
+      text-align: center;
+      padding: 80px 0 60px;
+      border-bottom: 3px solid #1a1a1a;
+      margin-bottom: 60px;
+      page-break-after: always;
+    }
+    .cover .logo { font-size: 36pt; font-weight: bold; letter-spacing: -1px; }
+    .cover .subtitle { font-size: 14pt; color: #555; margin-top: 8px; }
+    .cover .version { font-size: 10pt; color: #888; margin-top: 40px; }
+
+    /* ── TOC ── */
+    .toc { margin-bottom: 60px; page-break-after: always; }
+    .toc h2 { font-size: 16pt; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+    .toc ol { padding-left: 24px; }
+    .toc li { margin: 6px 0; font-size: 11pt; }
+    .toc li span { color: #888; float: right; }
+
+    /* ── Headings ── */
+    h1 { font-size: 22pt; margin: 0 0 6px; }
+    h2 { font-size: 16pt; margin: 36px 0 12px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    h3 { font-size: 13pt; margin: 24px 0 8px; color: #222; }
+    h4 { font-size: 11pt; margin: 16px 0 6px; color: #333; font-style: italic; }
+
+    /* ── Body text ── */
+    p { margin: 0 0 10px; }
+    ul, ol { padding-left: 22px; margin: 0 0 12px; }
+    li { margin: 4px 0; }
+    strong { font-weight: bold; }
+    em { font-style: italic; }
+
+    /* ── Role badges ── */
+    .badge {
+      display: inline-block;
+      font-size: 8pt;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-owner { background: #1a1a1a; color: #fff; }
+    .badge-both  { background: #e5e7eb; color: #374151; }
+
+    /* ── Note / tip boxes ── */
+    .note {
+      border-left: 4px solid #3b82f6;
+      background: #eff6ff;
+      padding: 10px 14px;
+      margin: 14px 0;
+      font-size: 10.5pt;
+    }
+    .tip {
+      border-left: 4px solid #22c55e;
+      background: #f0fdf4;
+      padding: 10px 14px;
+      margin: 14px 0;
+      font-size: 10.5pt;
+    }
+    .warn {
+      border-left: 4px solid #f59e0b;
+      background: #fffbeb;
+      padding: 10px 14px;
+      margin: 14px 0;
+      font-size: 10.5pt;
+    }
+
+    /* ── Step lists ── */
+    .steps { counter-reset: step; padding-left: 0; list-style: none; margin: 12px 0; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 12px;
+      margin: 8px 0;
+      align-items: flex-start;
+    }
+    .steps li::before {
+      content: counter(step);
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 9pt;
+      font-weight: bold;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 10.5pt; }
+    th { background: #1a1a1a; color: #fff; padding: 8px 10px; text-align: left; font-size: 10pt; }
+    td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    tr:nth-child(even) td { background: #f9fafb; }
+
+    /* ── Section breaks ── */
+    .section { margin-bottom: 48px; }
+    .page-break { page-break-before: always; }
+
+    /* ── Print ── */
+    @media print {
+      body { padding: 20px 32px; font-size: 10.5pt; }
+      .cover { padding: 60px 0 40px; }
+      a { text-decoration: none; color: inherit; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     COVER
+══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo">WorkShopBar</div>
+  <div class="subtitle">Bar Management System — User Manual</div>
+  <div class="version">Version 1.0 &nbsp;·&nbsp; June 2026</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li>Introduction &amp; Roles <span>2</span></li>
+    <li>Logging In <span>2</span></li>
+    <li>Dashboard <span>3</span></li>
+    <li>Recording a Sale <span>4</span></li>
+    <li>Open Tabs <span>5</span></li>
+    <li>Customers <span>6</span></li>
+    <li>Sales History <span>7</span></li>
+    <li>Inventory Management <span>8</span></li>
+    <li>Menu Management <span>9</span></li>
+    <li>Staff Management <span>10</span></li>
+    <li>Reports &amp; Analytics <span>11</span></li>
+    <li>Quick Reference <span>12</span></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════
+     1. INTRODUCTION
+══════════════════════════════════════════ -->
+<div class="section">
+  <h2>1. Introduction &amp; Roles</h2>
+
+  <p>WorkShopBar is a web-based system for managing daily bar operations — recording sales, tracking unpaid tabs, monitoring stock, and reviewing revenue. It runs on any device with a browser: phone, tablet, or computer.</p>
+
+  <h3>Two roles</h3>
+  <table>
+    <thead><tr><th>Role</th><th>What they can do</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Owner</strong></td>
+        <td>Full access: dashboard, sales, tabs, customers, menu, inventory, reports, analytics, staff management, and voiding sales.</td>
+      </tr>
+      <tr>
+        <td><strong>Bartender</strong></td>
+        <td>Record sales, view sales history, manage open tabs, and look up customers. Cannot access financial reports, inventory, or staff settings.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note"><strong>Note:</strong> Pages and navigation items not available to your role are hidden automatically. Bartenders will not see Dashboard, Inventory, Reports, Analytics, or Staff in their menu.</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     2. LOGGING IN
+══════════════════════════════════════════ -->
+<div class="section">
+  <h2>2. Logging In</h2>
+
+  <ol class="steps">
+    <li>Open the WorkShopBar URL in any browser.</li>
+    <li>Enter your <strong>name</strong> and <strong>password</strong> as provided by the owner.</li>
+    <li>Tap or click <strong>Sign In</strong>.</li>
+    <li>You are now on the main screen. The navigation is on the left (desktop) or accessible via the menu button at the top (mobile).</li>
+  </ol>
+
+  <div class="tip"><strong>Tip:</strong> On mobile, bookmark the URL on your home screen for one-tap access.</div>
+
+  <h3>Signing out</h3>
+  <p>Tap your name at the bottom of the sidebar and press <strong>Sign Out</strong>. Always sign out when leaving a shared device.</p>
+
+  <h3>Language</h3>
+  <p>Toggle between <strong>English</strong> and <strong>Amharic</strong> using the EN / አማ buttons at the bottom of the sidebar.</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     3. DASHBOARD
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>3. Dashboard <span class="badge badge-owner">Owner only</span></h2>
+
+  <p>The dashboard gives a live snapshot of today's business at a glance.</p>
+
+  <h3>Top row — Money</h3>
+  <table>
+    <thead><tr><th>Card</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Today's Revenue</strong></td><td>The total bill value of every sale recorded today — both paid and unpaid combined.</td></tr>
+      <tr><td><strong>Today's Paid</strong> (green)</td><td>Cash actually collected today from today's orders.</td></tr>
+      <tr><td><strong>Today's Unpaid</strong> (yellow)</td><td>The remaining balance still owed on today's open tabs.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Middle row — Operations</h3>
+  <table>
+    <thead><tr><th>Card</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Sales Today</strong></td><td>Number of orders recorded today (paid and unpaid).</td></tr>
+      <tr><td><strong>Open Tabs</strong></td><td>Total number of unpaid tabs across all time. Click to go to the Open Tabs page.</td></tr>
+      <tr><td><strong>Low Stock</strong></td><td>Number of items at or below their low-stock threshold. Click to go to Inventory.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Bottom — Items Sold Today</h3>
+  <p>A detailed list showing every menu item sold today with the unit price, quantity sold, and total revenue per item. The total item count across all orders appears in the card header.</p>
+
+  <h3>Recent Sales</h3>
+  <p>The last 5 orders recorded, with customer name, items, amount, and paid/unpaid status. Click <em>View all sales</em> to go to the full sales history.</p>
+
+  <h3>Low Stock Alerts</h3>
+  <p>Items running low are listed here. Items shown as <strong>OUT</strong> have zero stock remaining.</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     4. RECORDING A SALE
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>4. Recording a Sale <span class="badge badge-both">All staff</span></h2>
+
+  <p>Go to <strong>New Sale</strong> from the navigation.</p>
+
+  <h3>Step 1 — Customer (optional)</h3>
+  <ol class="steps">
+    <li>Type the customer's name in the search box. Results appear as you type.</li>
+    <li>Select the customer from the list, or press <strong>Create "[name]"</strong> to add them on the spot.</li>
+    <li>Leave blank for an anonymous (walk-in) sale.</li>
+  </ol>
+
+  <div class="warn"><strong>Existing tab alert:</strong> If the selected customer already has an open unpaid tab, a yellow banner appears showing what they already owe. You will see two options:
+    <ul style="margin-top:6px;">
+      <li><strong>Add to existing tab</strong> — appends the new items to the same tab (recommended).</li>
+      <li><strong>New tab</strong> — creates a separate new tab for this visit.</li>
+    </ul>
+  </div>
+
+  <h3>Step 2 — Items</h3>
+  <ol class="steps">
+    <li>Tap any item to add it to the order. Items are grouped by category.</li>
+    <li>Use the <strong>+</strong> and <strong>−</strong> buttons to adjust quantities.</li>
+    <li>The running total updates automatically at the bottom.</li>
+  </ol>
+
+  <div class="tip"><strong>Stock warning:</strong> If an item does not have enough stock when you try to submit, the system will reject the sale and tell you which item is short.</div>
+
+  <h3>Step 3 — Payment</h3>
+  <table>
+    <thead><tr><th>Option</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Paid now</strong></td><td>The customer pays the full amount immediately.</td></tr>
+      <tr><td><strong>Partial payment</strong></td><td>The customer pays part now and owes the rest. Enter the amount paid.</td></tr>
+      <tr><td><strong>Open tab</strong></td><td>The customer leaves without paying. The tab will appear in Open Tabs.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note"><strong>Note:</strong> When adding to an existing tab, the payment section is disabled — items are simply added to the existing tab. Collect payment from the Open Tabs page.</div>
+
+  <h3>Step 4 — Submit</h3>
+  <p>Press the <strong>Record Sale</strong> button at the bottom. You will be redirected to the sales history on success. If something goes wrong (e.g. out of stock) an error message appears.</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     5. OPEN TABS
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>5. Open Tabs <span class="badge badge-both">All staff</span></h2>
+
+  <p>Open Tabs lists every unpaid order, sorted oldest first (highest priority at the top). The total owed across all tabs is shown at the top right.</p>
+
+  <h3>What each tab card shows</h3>
+  <ul>
+    <li><strong>Customer name</strong> and the date/bartender who opened it.</li>
+    <li><strong>Items ordered</strong> with quantities and subtotals.</li>
+    <li><strong>Payment history</strong> — if the customer has made partial payments, each payment is listed with its date and amount.</li>
+    <li><strong>Amount owed</strong> — for partial payments: original total (strikethrough), amount paid (green), remaining balance (yellow, bold).</li>
+  </ul>
+
+  <h3>Collecting payment</h3>
+
+  <h4>Partial payment</h4>
+  <ol class="steps">
+    <li>Press <strong>Add Payment</strong> on the tab card.</li>
+    <li>Enter the amount the customer is paying now.</li>
+    <li>Press <strong>Record</strong>. The remaining balance updates immediately. The payment is logged with the current date and time.</li>
+  </ol>
+
+  <h4>Full payment (close the tab)</h4>
+  <ol class="steps">
+    <li>Press <strong>Mark Paid</strong> on the tab card.</li>
+    <li>Confirm. The tab disappears from the list. The remaining balance is recorded as a payment.</li>
+  </ol>
+
+  <div class="tip"><strong>Tip:</strong> Payment history is always visible on the tab card and on the customer's profile page, so you can see exactly when and how much each customer has paid.</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     6. CUSTOMERS
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>6. Customers <span class="badge badge-both">All staff</span></h2>
+
+  <p>The Customers page lists all registered customers. Use the search bar to find a customer by name.</p>
+
+  <h3>Customer list</h3>
+  <p>Each customer card shows:</p>
+  <ul>
+    <li>Name and phone number (if recorded).</li>
+    <li>Total number of sales.</li>
+    <li>Open tab amount (if they owe anything).</li>
+  </ul>
+
+  <h3>Adding a customer manually</h3>
+  <ol class="steps">
+    <li>Press <strong>Add Customer</strong>.</li>
+    <li>Enter the name (required), phone, and any notes.</li>
+    <li>Press <strong>Save</strong>.</li>
+  </ol>
+  <div class="note">Customers are also created automatically when you type a new name in the New Sale form.</div>
+
+  <h3>Customer profile page</h3>
+  <p>Click on any customer to open their profile. This shows:</p>
+  <ul>
+    <li>Total outstanding balance across all open tabs.</li>
+    <li>Full sales history — every order ever recorded for this customer.</li>
+    <li>For each open sale: items ordered, payment history with dates, remaining balance, and buttons to add a payment or mark fully paid.</li>
+  </ul>
+
+  <h3>Editing a customer</h3>
+  <p>Press the edit (pencil) icon on the customer's profile page to update their name, phone, or notes.</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     7. SALES HISTORY
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>7. Sales History <span class="badge badge-both">All staff</span></h2>
+
+  <p>Sales History shows every order ever recorded. Use the filters and sort options at the top to find what you need.</p>
+
+  <h3>Filters</h3>
+  <ul>
+    <li><strong>All / Paid / Unpaid</strong> — filter by payment status.</li>
+    <li><strong>Sort by</strong> — Date, Amount, or Customer name.</li>
+  </ul>
+
+  <h3>Sale card</h3>
+  <p>Each sale shows: customer name, date, bartender who recorded it, items with quantities and prices, total amount, and payment status badge.</p>
+
+  <h3>Voiding a sale <span class="badge badge-owner">Owner only</span></h3>
+  <p>If a sale was recorded by mistake, owners can void it:</p>
+  <ol class="steps">
+    <li>Find the sale in Sales History.</li>
+    <li>Press the <strong>Void</strong> button.</li>
+    <li>Confirm. The sale is deleted and inventory is automatically restored.</li>
+  </ol>
+  <div class="warn"><strong>Warning:</strong> Voiding is permanent. The sale is removed from all reports and the stock is returned. Use only for genuine recording mistakes.</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     8. INVENTORY
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>8. Inventory Management <span class="badge badge-owner">Owner only</span></h2>
+
+  <p>Inventory tracks the physical stock of every item you sell. Stock levels decrease automatically when a sale is recorded.</p>
+
+  <h3>Adding a new item to inventory</h3>
+  <ol class="steps">
+    <li>Press <strong>Track Item</strong>.</li>
+    <li>Fill in the form:
+      <ul>
+        <li><strong>Name</strong> — the name that appears on the menu (e.g. "Heineken").</li>
+        <li><strong>Price</strong> — selling price per unit.</li>
+        <li><strong>Category</strong> — select an existing category or leave blank.</li>
+        <li><strong>Starting Quantity</strong> — how many units you have right now.</li>
+        <li><strong>Unit</strong> — e.g. bottles, cans, pints.</li>
+        <li><strong>Low Stock Alert at</strong> — the quantity at which the item should be flagged as low.</li>
+      </ul>
+    </li>
+    <li>Press <strong>Add</strong>. The item is created in inventory <em>and</em> added to the menu automatically.</li>
+  </ol>
+
+  <h3>Stock levels table</h3>
+  <table>
+    <thead><tr><th>Status badge</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>OK</strong> (green)</td><td>Stock is above the low threshold.</td></tr>
+      <tr><td><strong>LOW</strong> (yellow)</td><td>Stock is at or below the low threshold. Restock soon.</td></tr>
+      <tr><td><strong>OUT</strong> (red)</td><td>Zero stock. Selling this item is blocked until stock is added.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Adjusting stock</h3>
+  <p>When you receive a delivery or need to correct a quantity:</p>
+  <ol class="steps">
+    <li>Find the item and press <strong>Adjust Stock</strong>.</li>
+    <li>Enter the new total quantity (not the amount to add — enter the final number).</li>
+    <li>Press <strong>Save</strong>.</li>
+  </ol>
+
+  <h3>Removing an item</h3>
+  <p>Press the delete icon on an item. If the item has no sales history it is permanently deleted. If it has sales history it is deactivated (hidden from the menu but history is preserved).</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     9. MENU MANAGEMENT
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>9. Menu Management <span class="badge badge-owner">Owner only</span></h2>
+
+  <p>The Menu page shows all active menu items available for sale. Items are created primarily through <strong>Inventory</strong> (see section 8), which creates both the menu item and the stock tracking record at once.</p>
+
+  <h3>Editing an item</h3>
+  <ol class="steps">
+    <li>Find the item and press the edit (pencil) icon.</li>
+    <li>Update the name, price, or category.</li>
+    <li>Press <strong>Save</strong>.</li>
+  </ol>
+
+  <div class="note"><strong>Note:</strong> Changing a price only affects future sales. All past sales retain the price that was set at the time of the order.</div>
+
+  <h3>Deactivating / Deleting an item</h3>
+  <ul>
+    <li><strong>Deactivate</strong> — hides the item from the sale form but keeps all history. Use this when an item is temporarily unavailable.</li>
+    <li><strong>Delete</strong> — permanently removes items with no sales history. Items with sales history are deactivated instead.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════
+     10. STAFF MANAGEMENT
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>10. Staff Management <span class="badge badge-owner">Owner only</span></h2>
+
+  <p>Each member of staff should have their own login account so that every sale is linked to who recorded it.</p>
+
+  <h3>Adding a new staff account</h3>
+  <ol class="steps">
+    <li>Go to <strong>Staff</strong> in the navigation.</li>
+    <li>Press <strong>Add Staff</strong>.</li>
+    <li>Enter the staff member's name, a password (minimum 4 characters), and select their role (Bartender or Owner).</li>
+    <li>Press <strong>Add</strong>. Give them their password privately.</li>
+  </ol>
+
+  <div class="tip"><strong>Best practice:</strong> Use each bartender's first name as their username so sales reports clearly show who sold what.</div>
+
+  <h3>Removing a staff account</h3>
+  <ol class="steps">
+    <li>Find the staff member in the list.</li>
+    <li>Press the delete (trash) icon.</li>
+    <li>Confirm. The account is removed. Their past sales records are preserved.</li>
+  </ol>
+
+  <div class="note"><strong>Note:</strong> You cannot delete your own account. If you need to remove an owner account, log in as a different owner first.</div>
+
+  <h3>Changing a password</h3>
+  <p>Currently, to change a password you must remove the account and create a new one with the same name and new password.</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     11. REPORTS & ANALYTICS
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>11. Reports &amp; Analytics <span class="badge badge-owner">Owner only</span></h2>
+
+  <h3>Reports page</h3>
+  <p>Shows revenue over time and the top-selling items.</p>
+  <ul>
+    <li><strong>Daily view</strong> — revenue by hour for today.</li>
+    <li><strong>Weekly view</strong> — revenue by day for the last 7 days.</li>
+    <li><strong>Top items</strong> — the 8 most-sold items by quantity in the selected period.</li>
+  </ul>
+
+  <h3>Analytics page</h3>
+  <p>Longer-range revenue and sales count trends:</p>
+  <ul>
+    <li><strong>Last 30 Days</strong> — daily breakdown.</li>
+    <li><strong>Last 12 Months</strong> — monthly breakdown.</li>
+    <li><strong>All Time (by Year)</strong> — yearly totals.</li>
+  </ul>
+
+  <h3>How revenue is counted</h3>
+  <p>Revenue figures count <strong>cash received on the day it was collected</strong> — not when the order was placed. This means:</p>
+  <ul>
+    <li>A tab opened Monday and paid Friday will appear in Friday's revenue.</li>
+    <li>A partial payment on Wednesday will appear in Wednesday's revenue.</li>
+    <li>This gives an accurate picture of when money actually came into the bar.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════
+     12. QUICK REFERENCE
+══════════════════════════════════════════ -->
+<div class="section page-break">
+  <h2>12. Quick Reference</h2>
+
+  <h3>Daily workflow — Bartender</h3>
+  <ol class="steps">
+    <li>Log in at the start of your shift.</li>
+    <li>For each order: go to <strong>New Sale</strong>, select the customer (or leave blank), add items, choose paid/partial/open tab, and submit.</li>
+    <li>When a customer with an open tab orders again: select their name — a yellow banner will appear. Choose <strong>Add to existing tab</strong> to keep everything on one tab.</li>
+    <li>When a customer settles their tab: go to <strong>Open Tabs</strong>, press <strong>Add Payment</strong> for partial payments or <strong>Mark Paid</strong> to close the tab.</li>
+    <li>Sign out at the end of your shift.</li>
+  </ol>
+
+  <h3>Daily workflow — Owner</h3>
+  <ol class="steps">
+    <li>Check the <strong>Dashboard</strong> to see today's revenue, paid vs unpaid totals, and any low-stock alerts.</li>
+    <li>Review <strong>Open Tabs</strong> to see which customers owe money.</li>
+    <li>Use <strong>Inventory</strong> to adjust stock after restocking deliveries.</li>
+    <li>Use <strong>Reports</strong> or <strong>Analytics</strong> to review weekly/monthly performance.</li>
+  </ol>
+
+  <h3>Common actions at a glance</h3>
+  <table>
+    <thead><tr><th>I want to…</th><th>Go to…</th></tr></thead>
+    <tbody>
+      <tr><td>Record a new order</td><td>New Sale</td></tr>
+      <tr><td>Add items to a customer's existing tab</td><td>New Sale → select customer → "Add to existing tab"</td></tr>
+      <tr><td>Collect payment on an open tab</td><td>Open Tabs → Add Payment or Mark Paid</td></tr>
+      <tr><td>See what a customer owes</td><td>Customers → (select customer)</td></tr>
+      <tr><td>Fix a sale recorded by mistake</td><td>Sales History → Void (owner only)</td></tr>
+      <tr><td>Update stock after a delivery</td><td>Inventory → Adjust Stock</td></tr>
+      <tr><td>Add a new drink to the menu</td><td>Inventory → Track Item</td></tr>
+      <tr><td>Add a new bartender</td><td>Staff → Add Staff</td></tr>
+      <tr><td>See today's revenue breakdown</td><td>Dashboard</td></tr>
+      <tr><td>See weekly revenue charts</td><td>Reports</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Troubleshooting</h3>
+  <table>
+    <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr><td>Sale rejected — "Not enough stock"</td><td>Check Inventory. Adjust the stock level if a delivery has arrived.</td></tr>
+      <tr><td>Item not appearing in New Sale</td><td>Check that the item is active in Menu Management and has stock in Inventory.</td></tr>
+      <tr><td>Customer not found</td><td>Type their name and press "Create [name]" to add them instantly.</td></tr>
+      <tr><td>Wrong amount recorded on a sale</td><td>Owner can void the sale from Sales History and re-record it correctly.</td></tr>
+      <tr><td>Can't log in</td><td>Ask the owner to check your account in Staff Management.</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 48px; text-align: center; color: #888; font-size: 9.5pt; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+    WorkShopBar User Manual · Version 1.0 · June 2026<br>
+    For support, contact your system administrator.
+  </div>
+</div>
+
+</body>
+</html>
