@@ -11,25 +11,31 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Credentials({
       async authorize(credentials) {
         const parsed = z
-          .object({ email: z.string().email(), password: z.string().min(1) })
+          .object({ password: z.string().min(1) })
           .safeParse(credentials);
 
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const { password } = parsed.data;
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
+        // Try each user's password — owner first so owner gets priority
+        const users = await prisma.user.findMany({
+          orderBy: { role: "asc" }, // BARTENDER < OWNER alphabetically; swap with explicit sort
+        });
 
-        const passwordsMatch = await bcrypt.compare(password, user.hashedPassword);
-        if (!passwordsMatch) return null;
+        // Sort so OWNER is checked first
+        const sorted = users.sort((a, b) =>
+          a.role === "OWNER" ? -1 : b.role === "OWNER" ? 1 : 0
+        );
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
+        for (const user of sorted) {
+          const match = await bcrypt.compare(password, user.hashedPassword);
+          if (match) {
+            return { id: user.id, email: user.email, name: user.name, role: user.role };
+          }
+        }
+
+        return null;
       },
     }),
   ],
