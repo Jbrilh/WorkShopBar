@@ -135,7 +135,7 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">{t("inventory.title")}</h1>
         <div className="flex items-center gap-3">
           {lowCount > 0 && <Badge variant="warning">{lowCount} {t("inventory.needsAttention")}</Badge>}
@@ -158,50 +158,84 @@ export function InventoryClient({ initialItems, untrackedItems }: Props) {
               {t("inventory.empty")}
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("inventory.item")}</TableHead>
-                  <TableHead>{t("inventory.category")}</TableHead>
-                  <TableHead>{t("inventory.stock")}</TableHead>
-                  <TableHead>{t("inventory.unit")}</TableHead>
-                  <TableHead>{t("inventory.lowAt")}</TableHead>
-                  <TableHead>{t("inventory.status")}</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile card view */}
+              <div className="sm:hidden space-y-2">
                 {items.map((item) => {
                   const status = stockStatus(item);
                   return (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.menuItem.name}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {item.menuItem.category?.name ?? "—"}
-                      </TableCell>
-                      <TableCell className="font-bold">{item.quantity}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{item.unit}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{item.lowThreshold}</TableCell>
-                      <TableCell>
-                        {status === "out" && <Badge variant="destructive">{t("inventory.out")}</Badge>}
-                        {status === "low" && <Badge variant="warning">{t("inventory.low")}</Badge>}
-                        {status === "ok" && <Badge variant="success">{t("inventory.ok")}</Badge>}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                    <div key={item.id} className="flex items-start justify-between rounded-lg border p-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{item.menuItem.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.menuItem.category?.name ?? "—"}</p>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className="text-sm font-bold">{item.quantity} {item.unit}</span>
+                          {status === "out" && <Badge variant="destructive">{t("inventory.out")}</Badge>}
+                          {status === "low" && <Badge variant="warning">{t("inventory.low")}</Badge>}
+                          {status === "ok" && <Badge variant="success">{t("inventory.ok")}</Badge>}
                         </div>
-                      </TableCell>
-                    </TableRow>
+                        <p className="text-xs text-muted-foreground mt-1">{t("inventory.lowAt")}: {item.lowThreshold}</p>
+                      </div>
+                      <div className="flex gap-1 ml-2 shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
                   );
                 })}
-              </TableBody>
-            </Table>
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("inventory.item")}</TableHead>
+                      <TableHead>{t("inventory.category")}</TableHead>
+                      <TableHead>{t("inventory.stock")}</TableHead>
+                      <TableHead>{t("inventory.unit")}</TableHead>
+                      <TableHead>{t("inventory.lowAt")}</TableHead>
+                      <TableHead>{t("inventory.status")}</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item) => {
+                      const status = stockStatus(item);
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.menuItem.name}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {item.menuItem.category?.name ?? "—"}
+                          </TableCell>
+                          <TableCell className="font-bold">{item.quantity}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{item.unit}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{item.lowThreshold}</TableCell>
+                          <TableCell>
+                            {status === "out" && <Badge variant="destructive">{t("inventory.out")}</Badge>}
+                            {status === "low" && <Badge variant="warning">{t("inventory.low")}</Badge>}
+                            {status === "ok" && <Badge variant="success">{t("inventory.ok")}</Badge>}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

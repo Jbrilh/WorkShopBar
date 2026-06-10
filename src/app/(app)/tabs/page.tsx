@@ -56,9 +56,9 @@ export default async function TabsPage() {
             return (
               <Card key={sale.id} className="border-yellow-200">
                 <CardContent className="py-4 px-5">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-semibold">
                           {sale.customer?.name ?? "Anonymous"}
                         </span>
@@ -80,17 +80,19 @@ export default async function TabsPage() {
                         <p className="text-xs text-muted-foreground mt-1 italic">{sale.notes}</p>
                       )}
                     </div>
-                    <div className="text-right flex flex-col items-end gap-2">
-                      {hasPartialPayment ? (
-                        <>
-                          <p className="text-sm text-muted-foreground line-through">{formatCurrency(total)}</p>
-                          <div className="text-sm text-green-700"><T k="customers.paid" /> {formatCurrency(paid)}</div>
-                          <p className="font-bold text-lg text-yellow-700">{formatCurrency(remaining)} <T k="sales.owed" /></p>
-                        </>
-                      ) : (
-                        <p className="font-bold text-lg">{formatCurrency(total)}</p>
-                      )}
-                      <div className="flex gap-2">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 border-t sm:border-0 pt-3 sm:pt-0">
+                      <div className="sm:text-right">
+                        {hasPartialPayment ? (
+                          <div className="space-y-0.5">
+                            <p className="text-sm text-muted-foreground line-through">{formatCurrency(total)}</p>
+                            <div className="text-sm text-green-700"><T k="customers.paid" /> {formatCurrency(paid)}</div>
+                            <p className="font-bold text-lg text-yellow-700">{formatCurrency(remaining)} <T k="sales.owed" /></p>
+                          </div>
+                        ) : (
+                          <p className="font-bold text-lg">{formatCurrency(total)}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
                         <AddPaymentButton saleId={sale.id} remaining={remaining} />
                         <MarkPaidButton saleId={sale.id} />
                       </div>
