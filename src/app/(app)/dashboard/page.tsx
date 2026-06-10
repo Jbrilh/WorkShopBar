@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, CreditCard, AlertTriangle, ShoppingCart } from "lucide-react";
+import { DollarSign, CreditCard, AlertTriangle, ShoppingCart, CheckCircle, Clock, Package } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { startOfDay } from "date-fns";
@@ -17,11 +17,11 @@ export default async function DashboardPage() {
   const isOwner = true;
   const today = startOfDay(new Date());
 
-  const [todayRevenue, openTabsCount, lowStockItems, recentSales, todaySalesCount] =
+  const [todaySales, openTabsCount, lowStockItems, recentSales, todaySalesCount, itemsSoldToday] =
     await Promise.all([
-      prisma.payment.aggregate({
+      prisma.sale.aggregate({
         where: { createdAt: { gte: today } },
-        _sum: { amount: true },
+        _sum: { totalAmount: true, amountPaid: true },
       }),
       prisma.sale.count({ where: { status: "OPEN" } }),
       prisma.$queryRaw<{ name: string; quantity: number; lowThreshold: number }[]>`
@@ -40,9 +40,16 @@ export default async function DashboardPage() {
         },
       }),
       prisma.sale.count({ where: { createdAt: { gte: today } } }),
+      prisma.saleItem.aggregate({
+        where: { sale: { createdAt: { gte: today } } },
+        _sum: { quantity: true },
+      }),
     ]);
 
-  const revenue = Number(todayRevenue._sum.amount ?? 0);
+  const todayTotal  = Number(todaySales._sum.totalAmount ?? 0);
+  const todayPaid   = Number(todaySales._sum.amountPaid  ?? 0);
+  const todayUnpaid = todayTotal - todayPaid;
+  const itemsCount  = Number(itemsSoldToday._sum.quantity ?? 0);
 
   return (
     <div className="space-y-6">
@@ -56,21 +63,44 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isOwner && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium"><T k="dashboard.todayRevenue" /></CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(revenue)}</div>
-              <p className="text-xs text-muted-foreground">Cash collected today</p>
-            </CardContent>
-          </Card>
-        )}
+      {/* Stats — row 1: today's money */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium"><T k="dashboard.todayRevenue" /></CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(todayTotal)}</div>
+            <p className="text-xs text-muted-foreground"><T k="dashboard.todayRevenueSub" /></p>
+          </CardContent>
+        </Card>
 
+        <Card className="border-green-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-green-700"><T k="dashboard.todayPaid" /></CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-700">{formatCurrency(todayPaid)}</div>
+            <p className="text-xs text-muted-foreground"><T k="dashboard.todayPaidSub" /></p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-yellow-700"><T k="dashboard.todayUnpaid" /></CardTitle>
+            <Clock className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-700">{formatCurrency(todayUnpaid)}</div>
+            <p className="text-xs text-muted-foreground"><T k="dashboard.todayUnpaidSub" /></p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Stats — row 2: operations */}
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium"><T k="dashboard.salesToday" /></CardTitle>
@@ -95,20 +125,18 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {isOwner && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium"><T k="dashboard.lowStock" /></CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{lowStockItems.length}</div>
-              <Link href="/inventory" className="text-xs text-primary hover:underline">
-                <T k="dashboard.viewInventory" />
-              </Link>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium"><T k="dashboard.lowStock" /></CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{lowStockItems.length}</div>
+            <Link href="/inventory" className="text-xs text-primary hover:underline">
+              <T k="dashboard.viewInventory" />
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -172,6 +200,18 @@ export default async function DashboardPage() {
           </Card>
         )}
       </div>
+
+      {/* Items sold today */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base"><T k="dashboard.itemsSoldToday" /></CardTitle>
+          <Package className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold">{itemsCount}</div>
+          <p className="text-xs text-muted-foreground mt-1"><T k="dashboard.itemsSoldSub" /></p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
