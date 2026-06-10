@@ -40,16 +40,21 @@ export default async function DashboardPage() {
         },
       }),
       prisma.sale.count({ where: { createdAt: { gte: today } } }),
-      prisma.saleItem.aggregate({
-        where: { sale: { createdAt: { gte: today } } },
-        _sum: { quantity: true },
-      }),
+      prisma.$queryRaw<{ name: string; price: string; qty: number; revenue: string }[]>`
+        SELECT mi.name, mi.price::text, SUM(si.quantity)::int as qty, SUM(si.subtotal)::text as revenue
+        FROM "SaleItem" si
+        JOIN "MenuItem" mi ON si."menuItemId" = mi.id
+        JOIN "Sale" s ON si."saleId" = s.id
+        WHERE s."createdAt" >= ${today}
+        GROUP BY mi.id, mi.name, mi.price
+        ORDER BY SUM(si.quantity) DESC
+      `,
     ]);
 
   const todayTotal  = Number(todaySales._sum.totalAmount ?? 0);
   const todayPaid   = Number(todaySales._sum.amountPaid  ?? 0);
   const todayUnpaid = todayTotal - todayPaid;
-  const itemsCount  = Number(itemsSoldToday._sum.quantity ?? 0);
+  const itemsCount  = itemsSoldToday.reduce((sum: number, r: { qty: number }) => sum + r.qty, 0);
 
   return (
     <div className="space-y-6">
@@ -205,11 +210,30 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base"><T k="dashboard.itemsSoldToday" /></CardTitle>
-          <Package className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-muted-foreground">{itemsCount} total</span>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{itemsCount}</div>
-          <p className="text-xs text-muted-foreground mt-1"><T k="dashboard.itemsSoldSub" /></p>
+          {itemsSoldToday.length === 0 ? (
+            <p className="text-sm text-muted-foreground"><T k="dashboard.noSalesToday" /></p>
+          ) : (
+            <div className="space-y-2">
+              {itemsSoldToday.map((item: { name: string; price: string; qty: number; revenue: string }) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium">{item.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{formatCurrency(Number(item.price))} each</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-semibold">{item.qty}x</span>
+                    <span className="text-xs text-muted-foreground ml-2">= {formatCurrency(Number(item.revenue))}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
