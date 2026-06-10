@@ -57,6 +57,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "One or more items not found or inactive" }, { status: 400 });
   }
 
+  // Check stock levels — block if any tracked item would go negative
+  const inventoryItems = await prisma.inventoryItem.findMany({
+    where: { menuItemId: { in: items.map((i) => i.menuItemId) } },
+    include: { menuItem: { select: { name: true } } },
+  });
+  const stockMap = Object.fromEntries(inventoryItems.map((i) => [i.menuItemId, { qty: i.quantity, name: i.menuItem.name }]));
+
+  const outOfStock = items.filter((item) => {
+    const stock = stockMap[item.menuItemId];
+    return stock !== undefined && stock.qty < item.quantity;
+  });
+
+  if (outOfStock.length > 0) {
+    const names = outOfStock.map((item) => stockMap[item.menuItemId]?.name ?? item.menuItemId).join(", ");
+    return NextResponse.json({ error: `Not enough stock: ${names}` }, { status: 400 });
+  }
+
   const priceMap = Object.fromEntries(menuItems.map((m) => [m.id, Number(m.price)]));
 
   const saleItems = items.map((item) => ({
@@ -67,6 +84,7 @@ export async function POST(request: Request) {
   }));
 
   const totalAmount = saleItems.reduce((sum, i) => sum + i.subtotal, 0);
+  const finalAmountPaid = status === "PAID" ? totalAmount : amountPaid;
 
   const sale = await prisma.$transaction(async (tx) => {
     const created = await tx.sale.create({
@@ -75,12 +93,10 @@ export async function POST(request: Request) {
         userId: session.user!.id,
         status,
         totalAmount,
-        amountPaid: status === "PAID" ? totalAmount : amountPaid,
+        amountPaid: finalAmountPaid,
         notes: notes || null,
         paidAt: status === "PAID" ? new Date() : null,
-        items: {
-          create: saleItems,
-        },
+        items: { create: saleItems },
       },
       include: {
         customer: true,
@@ -88,7 +104,14 @@ export async function POST(request: Request) {
       },
     });
 
-    // Decrement inventory for each item
+    // Record initial payment if money was collected upfront
+    if (finalAmountPaid > 0) {
+      await tx.payment.create({
+        data: { saleId: created.id, amount: finalAmountPaid },
+      });
+    }
+
+    // Decrement inventory
     for (const item of items) {
       await tx.inventoryItem.updateMany({
         where: { menuItemId: item.menuItemId },

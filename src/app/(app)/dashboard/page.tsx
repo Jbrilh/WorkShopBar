@@ -20,8 +20,8 @@ export default async function DashboardPage() {
   const [todayRevenue, openTabsCount, lowStockItems, recentSales, todaySalesCount] =
     await Promise.all([
       prisma.sale.aggregate({
-        where: { status: "PAID", paidAt: { gte: today } },
-        _sum: { totalAmount: true },
+        where: { createdAt: { gte: today } },
+        _sum: { amountPaid: true },
       }),
       prisma.sale.count({ where: { status: "OPEN" } }),
       prisma.$queryRaw<{ name: string; quantity: number; lowThreshold: number }[]>`
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
       prisma.sale.count({ where: { createdAt: { gte: today } } }),
     ]);
 
-  const revenue = Number(todayRevenue._sum.totalAmount ?? 0);
+  const revenue = Number(todayRevenue._sum.amountPaid ?? 0);
 
   return (
     <div className="space-y-6">
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(revenue)}</div>
-              <p className="text-xs text-muted-foreground"><T k="dashboard.todayRevenueSub" /></p>
+              <p className="text-xs text-muted-foreground">Cash collected today</p>
             </CardContent>
           </Card>
         )}

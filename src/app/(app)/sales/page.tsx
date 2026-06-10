@@ -1,9 +1,11 @@
-import { requireAuth } from "@/lib/auth-utils";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { SalesClient } from "./SalesClient";
 
 export default async function SalesPage() {
-  await requireAuth();
+  const session = await auth();
+  if (!session?.user) redirect("/login");
 
   const sales = await prisma.sale.findMany({
     include: {
@@ -15,5 +17,10 @@ export default async function SalesPage() {
     take: 200,
   });
 
-  return <SalesClient initialSales={JSON.parse(JSON.stringify(sales))} />;
+  return (
+    <SalesClient
+      initialSales={JSON.parse(JSON.stringify(sales))}
+      isOwner={session.user.role === "OWNER"}
+    />
+  );
 }

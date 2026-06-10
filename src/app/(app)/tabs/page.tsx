@@ -17,6 +17,7 @@ export default async function TabsPage() {
       customer: true,
       user: { select: { name: true } },
       items: { include: { menuItem: true } },
+      payments: { orderBy: { createdAt: "asc" } },
     },
     orderBy: { createdAt: "asc" }, // oldest first — highest priority
   });
@@ -78,6 +79,17 @@ export default async function TabsPage() {
                       </ul>
                       {sale.notes && (
                         <p className="text-xs text-muted-foreground mt-1 italic">{sale.notes}</p>
+                      )}
+                      {sale.payments.length > 0 && (
+                        <div className="mt-2 pt-2 border-t space-y-0.5">
+                          <p className="text-xs font-medium text-muted-foreground"><T k="tabs.paymentHistory" /></p>
+                          {sale.payments.map((p) => (
+                            <div key={p.id} className="flex justify-between text-xs text-muted-foreground">
+                              <span>{formatDate(p.createdAt)}</span>
+                              <span className="text-green-700 font-medium">+{formatCurrency(Number(p.amount))}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 border-t sm:border-0 pt-3 sm:pt-0">

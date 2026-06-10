@@ -16,6 +16,7 @@ const translations = {
     "nav.inventory": "Inventory",
     "nav.reports": "Reports",
     "nav.analytics": "Analytics",
+    "nav.staff": "Staff",
     // roles
     "role.owner": "Owner",
     "role.bartender": "Bartender",
@@ -65,6 +66,10 @@ const translations = {
     "sales.partial": "Partial",
     "sales.owed": "owed",
     "sales.paid_short": "Paid",
+    "sales.void": "Void",
+    "sales.voiding": "Voiding...",
+    "sales.voidConfirm": "Void this sale and restore inventory?",
+    "sales.voided": "Sale voided",
     // customers
     "customers.title": "Customers",
     "customers.addCustomer": "Add Customer",
@@ -97,6 +102,7 @@ const translations = {
     "tabs.totalOwed": "Total owed:",
     "tabs.noTabs": "No open tabs. All sales are paid up!",
     "tabs.partial": "Partial",
+    "tabs.paymentHistory": "Payments",
     // dashboard
     "dashboard.title": "Dashboard",
     "dashboard.newSale": "New Sale",
@@ -173,6 +179,15 @@ const translations = {
     "analytics.noData": "No data for this period yet.",
     "analytics.revenue": "Revenue",
     "analytics.salesCount": "Number of Sales",
+    // users / staff
+    "users.title": "Staff",
+    "users.addStaff": "Add Staff",
+    "users.noStaff": "No staff accounts yet.",
+    "users.password": "Password",
+    "users.role": "Role",
+    "users.addNote": "Each staff member needs a unique password.",
+    "users.confirmDelete": "Remove this staff account?",
+    "users.removed": "Staff removed",
   },
   am: {
     // nav
@@ -185,6 +200,7 @@ const translations = {
     "nav.inventory": "መጋዘን",
     "nav.reports": "ሪፖርቶች",
     "nav.analytics": "ትንታኔ",
+    "nav.staff": "ሰራተኞች",
     // roles
     "role.owner": "ባለቤት",
     "role.bartender": "ባርቴንደር",
@@ -234,6 +250,10 @@ const translations = {
     "sales.partial": "ከፊል",
     "sales.owed": "ዕዳ",
     "sales.paid_short": "ተከፍሏል",
+    "sales.void": "ሰርዝ",
+    "sales.voiding": "በሰርዛ ላይ...",
+    "sales.voidConfirm": "ሽያጩን ሰርዞ ክምችቱን ይመልሳሉ?",
+    "sales.voided": "ሽያጩ ተሰርዟል",
     // customers
     "customers.title": "ደንበኞች",
     "customers.addCustomer": "ደንበኛ ጨምር",
@@ -266,6 +286,7 @@ const translations = {
     "tabs.totalOwed": "ጠቅላላ ዕዳ፡",
     "tabs.noTabs": "ያልተከፈለ ሒሳብ የለም። ሁሉም ሽያጮች ተከፍለዋል!",
     "tabs.partial": "ከፊል",
+    "tabs.paymentHistory": "ክፍያዎች",
     // dashboard
     "dashboard.title": "ዳሽቦርድ",
     "dashboard.newSale": "አዲስ ሽያጭ",
@@ -342,6 +363,15 @@ const translations = {
     "analytics.noData": "ለዚህ ጊዜ ምንም መረጃ የለም።",
     "analytics.revenue": "ገቢ",
     "analytics.salesCount": "የሽያጮች ቁጥር",
+    // users / staff
+    "users.title": "ሰራተኞች",
+    "users.addStaff": "ሰራተኛ ጨምር",
+    "users.noStaff": "ምንም ሰራተኛ አካውንት የለም።",
+    "users.password": "የምስጢር ቃል",
+    "users.role": "ሚና",
+    "users.addNote": "እያንዳንዱ ሰራተኛ ልዩ የምስጢር ቃል ያስፈልጋቸዋል።",
+    "users.confirmDelete": "ሰራተኛ አካውንቱን ያስወግዱ?",
+    "users.removed": "ሰራተኛ ተወግዷል",
   },
 } as const;
 

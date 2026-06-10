@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAuth } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         include: {
           items: { include: { menuItem: true } },
           user: { select: { name: true } },
+          payments: { orderBy: { createdAt: "asc" } },
         },
         orderBy: { createdAt: "desc" },
       },
@@ -90,6 +91,17 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       ))}
                     </ul>
                     {sale.notes && <p className="text-xs text-muted-foreground mt-1">{sale.notes}</p>}
+                    {sale.payments.length > 0 && (
+                      <div className="mt-2 pt-2 border-t space-y-0.5">
+                        <p className="text-xs font-medium text-muted-foreground"><T k="tabs.paymentHistory" /></p>
+                        {sale.payments.map((p) => (
+                          <div key={p.id} className="flex justify-between text-xs text-muted-foreground">
+                            <span>{formatDateShort(p.createdAt)}</span>
+                            <span className="text-green-700 font-medium">+{formatCurrency(Number(p.amount))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right flex flex-col items-end gap-2">
                     {sale.status === "OPEN" && Number(sale.amountPaid) > 0 ? (

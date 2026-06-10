@@ -90,6 +90,17 @@ model Sale {
   customer Customer?  @relation(fields: [customerId], references: [id])
   user     User       @relation(fields: [userId], references: [id])
   items    SaleItem[]
+  payments Payment[]
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  saleId    String
+  amount    Decimal  @db.Decimal(10, 2)
+  note      String?
+  createdAt DateTime @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
 }
 
 model SaleItem {

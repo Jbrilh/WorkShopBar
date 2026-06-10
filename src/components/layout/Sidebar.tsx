@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Beer,
   LogOut,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { href: "/inventory", labelKey: "nav.inventory", icon: Package, ownerOnly: true },
   { href: "/reports", labelKey: "nav.reports", icon: BarChart2, ownerOnly: true },
   { href: "/analytics", labelKey: "nav.analytics", icon: TrendingUp, ownerOnly: true },
+  { href: "/users", labelKey: "nav.staff", icon: UserCog, ownerOnly: true },
 ];
 
 interface SidebarProps {

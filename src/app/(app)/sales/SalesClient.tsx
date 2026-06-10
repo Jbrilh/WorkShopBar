@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { MarkPaidButton } from "../customers/[id]/MarkPaidButton";
+import { VoidSaleButton } from "./VoidSaleButton";
 import { useLanguage } from "@/lib/i18n";
 
 type Status = "ALL" | "PAID" | "OPEN";
@@ -24,7 +25,7 @@ interface Sale {
   items: { quantity: number; menuItem: { name: string } }[];
 }
 
-export function SalesClient({ initialSales }: { initialSales: Sale[] }) {
+export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; isOwner: boolean }) {
   const [filter, setFilter] = useState<Status>("ALL");
   const [sortBy, setSortBy] = useState<SortBy>("date");
   const [sales, setSales] = useState(initialSales);
@@ -34,6 +35,10 @@ export function SalesClient({ initialSales }: { initialSales: Sale[] }) {
     setSales((prev) =>
       prev.map((s) => (s.id === saleId ? { ...s, status: "PAID" as const } : s))
     );
+  }
+
+  function handleVoided(saleId: string) {
+    setSales((prev) => prev.filter((s) => s.id !== saleId));
   }
 
   const displayed = useMemo(() => {
@@ -146,9 +151,14 @@ export function SalesClient({ initialSales }: { initialSales: Sale[] }) {
                   ) : (
                     <p className="font-bold">{formatCurrency(Number(sale.totalAmount))}</p>
                   )}
-                  {sale.status === "OPEN" && (
-                    <MarkPaidButton saleId={sale.id} />
-                  )}
+                  <div className="flex gap-1 flex-wrap justify-end">
+                    {sale.status === "OPEN" && (
+                      <MarkPaidButton saleId={sale.id} />
+                    )}
+                    {isOwner && (
+                      <VoidSaleButton saleId={sale.id} onVoided={handleVoided} />
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
