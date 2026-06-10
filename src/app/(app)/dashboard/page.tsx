@@ -19,9 +19,9 @@ export default async function DashboardPage() {
 
   const [todayRevenue, openTabsCount, lowStockItems, recentSales, todaySalesCount] =
     await Promise.all([
-      prisma.sale.aggregate({
+      prisma.payment.aggregate({
         where: { createdAt: { gte: today } },
-        _sum: { amountPaid: true },
+        _sum: { amount: true },
       }),
       prisma.sale.count({ where: { status: "OPEN" } }),
       prisma.$queryRaw<{ name: string; quantity: number; lowThreshold: number }[]>`
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
       prisma.sale.count({ where: { createdAt: { gte: today } } }),
     ]);
 
-  const revenue = Number(todayRevenue._sum.amountPaid ?? 0);
+  const revenue = Number(todayRevenue._sum.amount ?? 0);
 
   return (
     <div className="space-y-6">

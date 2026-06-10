@@ -24,9 +24,9 @@ export async function GET(request: Request) {
     revenue = await prisma.$queryRaw<RevenueRow[]>`
       SELECT
         to_char(date_trunc('hour', "createdAt"), 'HH12:MI AM') as label,
-        COALESCE(SUM("amountPaid"), 0)::text as amount
-      FROM "Sale"
-      WHERE "createdAt" >= ${since} AND "amountPaid" > 0
+        COALESCE(SUM("amount"), 0)::text as amount
+      FROM "Payment"
+      WHERE "createdAt" >= ${since}
       GROUP BY date_trunc('hour', "createdAt")
       ORDER BY date_trunc('hour', "createdAt")
     `;
@@ -34,9 +34,9 @@ export async function GET(request: Request) {
     revenue = await prisma.$queryRaw<RevenueRow[]>`
       SELECT
         to_char(date_trunc('day', "createdAt"), 'Mon DD') as label,
-        COALESCE(SUM("amountPaid"), 0)::text as amount
-      FROM "Sale"
-      WHERE "createdAt" >= ${since} AND "amountPaid" > 0
+        COALESCE(SUM("amount"), 0)::text as amount
+      FROM "Payment"
+      WHERE "createdAt" >= ${since}
       GROUP BY date_trunc('day', "createdAt")
       ORDER BY date_trunc('day', "createdAt")
     `;
@@ -55,17 +55,17 @@ export async function GET(request: Request) {
     LIMIT 8
   `;
 
-  // Totals: sum of amountPaid across all sales in period
-  const totals = await prisma.sale.aggregate({
-    where: { createdAt: { gte: since }, amountPaid: { gt: 0 } },
-    _sum: { amountPaid: true },
+  // Totals: sum of all payments received in period
+  const totals = await prisma.payment.aggregate({
+    where: { createdAt: { gte: since } },
+    _sum: { amount: true },
     _count: { id: true },
   });
 
   return NextResponse.json({
     revenue: revenue.map((r) => ({ label: r.label, amount: parseFloat(r.amount) })),
     topItems: topItems.map((t) => ({ name: t.name, count: parseInt(t.count) })),
-    totalRevenue: Number(totals._sum.amountPaid ?? 0),
+    totalRevenue: Number(totals._sum.amount ?? 0),
     totalSales: totals._count.id,
   });
 }
