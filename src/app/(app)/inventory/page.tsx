@@ -5,10 +5,25 @@ import { InventoryClient } from "./InventoryClient";
 export default async function InventoryPage() {
   await requireOwner();
 
-  const items = await prisma.inventoryItem.findMany({
-    include: { menuItem: { include: { category: true } } },
-    orderBy: { menuItem: { name: "asc" } },
-  });
+  const [tracked, allMenuItems] = await Promise.all([
+    prisma.inventoryItem.findMany({
+      include: { menuItem: { include: { category: true } } },
+      orderBy: { menuItem: { name: "asc" } },
+    }),
+    prisma.menuItem.findMany({
+      where: { isActive: true },
+      include: { category: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  return <InventoryClient initialItems={JSON.parse(JSON.stringify(items))} />;
+  const trackedIds = new Set(tracked.map((t) => t.menuItemId));
+  const untrackedItems = allMenuItems.filter((m) => !trackedIds.has(m.id));
+
+  return (
+    <InventoryClient
+      initialItems={JSON.parse(JSON.stringify(tracked))}
+      untrackedItems={JSON.parse(JSON.stringify(untrackedItems))}
+    />
+  );
 }

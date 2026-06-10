@@ -22,8 +22,8 @@ export async function GET(request: Request) {
 const createSchema = z.object({
   name: z.string().min(1),
   price: z.number().positive(),
-  description: z.string().optional(),
-  categoryId: z.string().optional(),
+  description: z.string().nullish(),
+  categoryId: z.string().nullish(),
 });
 
 export async function POST(request: Request) {

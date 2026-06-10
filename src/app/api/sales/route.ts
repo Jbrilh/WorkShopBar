@@ -28,6 +28,7 @@ export async function GET(request: Request) {
 const createSchema = z.object({
   customerId: z.string().optional(),
   status: z.enum(["OPEN", "PAID"]).default("PAID"),
+  amountPaid: z.number().min(0).default(0),
   notes: z.string().optional(),
   items: z.array(
     z.object({
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { customerId, status, notes, items } = parsed.data;
+  const { customerId, status, notes, items, amountPaid } = parsed.data;
 
   // Fetch prices server-side
   const menuItems = await prisma.menuItem.findMany({
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
         userId: session.user!.id,
         status,
         totalAmount,
+        amountPaid: status === "PAID" ? totalAmount : amountPaid,
         notes: notes || null,
         paidAt: status === "PAID" ? new Date() : null,
         items: {

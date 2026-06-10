@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { MarkPaidButton } from "./MarkPaidButton";
+import { AddPaymentButton } from "./AddPaymentButton";
+import { EditCustomerButton } from "./EditCustomerButton";
+import { T } from "@/components/ui/T";
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAuth();
@@ -28,9 +31,10 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
   if (!customer) notFound();
 
+  // Use remaining (totalAmount - amountPaid) for accurate owed amount
   const openTotal = customer.sales
     .filter((s) => s.status === "OPEN")
-    .reduce((sum, s) => sum + Number(s.totalAmount), 0);
+    .reduce((sum, s) => sum + Number(s.totalAmount) - Number(s.amountPaid), 0);
 
   return (
     <div className="space-y-6">
@@ -40,15 +44,16 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">{customer.name}</h1>
           {customer.phone && <p className="text-sm text-muted-foreground">{customer.phone}</p>}
         </div>
-        {openTotal > 0 && (
-          <Badge variant="warning" className="ml-auto">
-            Open tab: {formatCurrency(openTotal)}
-          </Badge>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {openTotal > 0 && (
+            <Badge variant="warning"><T k="customers.openTab" /> {formatCurrency(openTotal)}</Badge>
+          )}
+          <EditCustomerButton customer={{ id: customer.id, name: customer.name, phone: customer.phone, notes: customer.notes }} />
+        </div>
       </div>
 
       {customer.notes && (
@@ -60,9 +65,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       )}
 
       <div className="space-y-3">
-        <h2 className="font-semibold text-lg">Sales History</h2>
+        <h2 className="font-semibold text-lg"><T k="customers.salesHistory" /></h2>
         {customer.sales.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No sales recorded.</p>
+          <p className="text-muted-foreground text-sm"><T k="customers.noSales" /></p>
         ) : (
           customer.sales.map((sale) => (
             <Card key={sale.id}>
@@ -74,7 +79,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                         {sale.status}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {formatDate(sale.createdAt)} · by {sale.user.name}
+                        {formatDate(sale.createdAt)} · <T k="customers.by" /> {sale.user.name}
                       </span>
                     </div>
                     <ul className="text-sm space-y-0.5">
@@ -87,8 +92,26 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                     {sale.notes && <p className="text-xs text-muted-foreground mt-1">{sale.notes}</p>}
                   </div>
                   <div className="text-right flex flex-col items-end gap-2">
-                    <p className="font-bold">{formatCurrency(Number(sale.totalAmount))}</p>
-                    {sale.status === "OPEN" && <MarkPaidButton saleId={sale.id} />}
+                    {sale.status === "OPEN" && Number(sale.amountPaid) > 0 ? (
+                      <>
+                        <p className="text-sm text-muted-foreground line-through">{formatCurrency(Number(sale.totalAmount))}</p>
+                        <p className="text-sm text-green-700"><T k="customers.paid" /> {formatCurrency(Number(sale.amountPaid))}</p>
+                        <p className="font-bold text-yellow-700">
+                          {formatCurrency(Number(sale.totalAmount) - Number(sale.amountPaid))} <T k="sales.owed" />
+                        </p>
+                      </>
+                    ) : (
+                      <p className="font-bold">{formatCurrency(Number(sale.totalAmount))}</p>
+                    )}
+                    {sale.status === "OPEN" && (
+                      <div className="flex gap-2">
+                        <AddPaymentButton
+                          saleId={sale.id}
+                          remaining={Number(sale.totalAmount) - Number(sale.amountPaid)}
+                        />
+                        <MarkPaidButton saleId={sale.id} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

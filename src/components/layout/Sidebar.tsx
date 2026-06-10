@@ -11,28 +11,31 @@ import {
   UtensilsCrossed,
   Package,
   BarChart2,
+  TrendingUp,
   Beer,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useLanguage, type TranslationKey } from "@/lib/i18n";
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: TranslationKey;
   icon: React.ElementType;
   ownerOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/sales/new", label: "New Sale", icon: ShoppingCart },
-  { href: "/sales", label: "Sales History", icon: CreditCard },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/tabs", label: "Open Tabs", icon: CreditCard },
-  { href: "/menu", label: "Menu", icon: UtensilsCrossed, ownerOnly: true },
-  { href: "/inventory", label: "Inventory", icon: Package, ownerOnly: true },
-  { href: "/reports", label: "Reports", icon: BarChart2, ownerOnly: true },
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, ownerOnly: true },
+  { href: "/sales/new", labelKey: "nav.newSale", icon: ShoppingCart },
+  { href: "/sales", labelKey: "nav.salesHistory", icon: CreditCard },
+  { href: "/customers", labelKey: "nav.customers", icon: Users },
+  { href: "/tabs", labelKey: "nav.openTabs", icon: CreditCard },
+  { href: "/menu", labelKey: "nav.menu", icon: UtensilsCrossed, ownerOnly: true },
+  { href: "/inventory", labelKey: "nav.inventory", icon: Package, ownerOnly: true },
+  { href: "/reports", labelKey: "nav.reports", icon: BarChart2, ownerOnly: true },
+  { href: "/analytics", labelKey: "nav.analytics", icon: TrendingUp, ownerOnly: true },
 ];
 
 interface SidebarProps {
@@ -43,6 +46,7 @@ interface SidebarProps {
 export function Sidebar({ userRole, userName }: SidebarProps) {
   const pathname = usePathname();
   const isOwner = userRole === "OWNER";
+  const { language, setLanguage, t } = useLanguage();
 
   const visibleItems = navItems.filter((item) => !item.ownerOnly || isOwner);
 
@@ -71,16 +75,42 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
               )}
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t">
-        <div className="mb-3">
+      <div className="p-4 border-t space-y-3">
+        {/* Language toggle */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          <button
+            onClick={() => setLanguage("en")}
+            className={cn(
+              "flex-1 py-1 text-xs font-semibold rounded-md transition-colors",
+              language === "en"
+                ? "bg-white shadow text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            EN
+          </button>
+          <button
+            onClick={() => setLanguage("am")}
+            className={cn(
+              "flex-1 py-1 text-xs font-semibold rounded-md transition-colors",
+              language === "am"
+                ? "bg-white shadow text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            አማ
+          </button>
+        </div>
+
+        <div>
           <p className="text-sm font-medium text-gray-900">{userName}</p>
-          <p className="text-xs text-gray-500">{isOwner ? "Owner" : "Bartender"}</p>
+          <p className="text-xs text-gray-500">{isOwner ? t("role.owner") : t("role.bartender")}</p>
         </div>
         <Button
           variant="ghost"
@@ -89,7 +119,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
           onClick={() => signOut({ callbackUrl: "/login" })}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Sign out
+          {t("common.signOut")}
         </Button>
       </div>
     </aside>

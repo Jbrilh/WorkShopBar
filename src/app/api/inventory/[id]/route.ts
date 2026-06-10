@@ -40,3 +40,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   return NextResponse.json(item);
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "OWNER") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await params;
+  await prisma.inventoryItem.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}

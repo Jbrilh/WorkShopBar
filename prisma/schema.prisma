@@ -81,6 +81,7 @@ model Sale {
   userId      String
   status      TabStatus @default(OPEN)
   totalAmount Decimal   @db.Decimal(10, 2)
+  amountPaid  Decimal   @default(0) @db.Decimal(10, 2)
   notes       String?
   paidAt      DateTime?
   createdAt   DateTime  @default(now())

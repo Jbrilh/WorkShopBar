@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/i18n";
 
 export function MarkPaidButton({ saleId }: { saleId: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   async function handlePay() {
     setLoading(true);
@@ -20,10 +22,10 @@ export function MarkPaidButton({ saleId }: { saleId: string }) {
     });
 
     if (res.ok) {
-      toast({ title: "Tab marked as paid" });
+      toast({ title: t("customers.markPaid") });
       router.refresh();
     } else {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: t("common.error"), variant: "destructive" });
     }
     setLoading(false);
   }
@@ -31,7 +33,7 @@ export function MarkPaidButton({ saleId }: { saleId: string }) {
   return (
     <Button size="sm" variant="outline" onClick={handlePay} disabled={loading}>
       <CheckCircle className="h-4 w-4 mr-1" />
-      {loading ? "..." : "Mark Paid"}
+      {loading ? t("customers.marking") : t("customers.markPaid")}
     </Button>
   );
 }

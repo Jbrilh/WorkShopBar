@@ -12,6 +12,7 @@ import {
   UtensilsCrossed,
   Package,
   BarChart2,
+  TrendingUp,
   Beer,
   LogOut,
   Menu,
@@ -19,16 +20,18 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useLanguage, type TranslationKey } from "@/lib/i18n";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/sales/new", label: "New Sale", icon: ShoppingCart },
-  { href: "/sales", label: "Sales History", icon: CreditCard },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/tabs", label: "Open Tabs", icon: CreditCard },
-  { href: "/menu", label: "Menu", icon: UtensilsCrossed, ownerOnly: true },
-  { href: "/inventory", label: "Inventory", icon: Package, ownerOnly: true },
-  { href: "/reports", label: "Reports", icon: BarChart2, ownerOnly: true },
+const navItems: { href: string; labelKey: TranslationKey; icon: React.ElementType; ownerOnly?: boolean }[] = [
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, ownerOnly: true },
+  { href: "/sales/new", labelKey: "nav.newSale", icon: ShoppingCart },
+  { href: "/sales", labelKey: "nav.salesHistory", icon: CreditCard },
+  { href: "/customers", labelKey: "nav.customers", icon: Users },
+  { href: "/tabs", labelKey: "nav.openTabs", icon: CreditCard },
+  { href: "/menu", labelKey: "nav.menu", icon: UtensilsCrossed, ownerOnly: true },
+  { href: "/inventory", labelKey: "nav.inventory", icon: Package, ownerOnly: true },
+  { href: "/reports", labelKey: "nav.reports", icon: BarChart2, ownerOnly: true },
+  { href: "/analytics", labelKey: "nav.analytics", icon: TrendingUp, ownerOnly: true },
 ];
 
 interface MobileNavProps {
@@ -40,6 +43,7 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isOwner = userRole === "OWNER";
+  const { language, setLanguage, t } = useLanguage();
   const visibleItems = navItems.filter((item) => !item.ownerOnly || isOwner);
 
   return (
@@ -49,9 +53,32 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
           <Beer className="h-5 w-5 text-primary" />
           <span className="font-bold">WorkShopBar</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Language toggle */}
+          <div className="flex gap-0.5 p-0.5 bg-muted rounded-md">
+            <button
+              onClick={() => setLanguage("en")}
+              className={cn(
+                "px-2 py-0.5 text-xs font-semibold rounded transition-colors",
+                language === "en" ? "bg-white shadow text-foreground" : "text-muted-foreground"
+              )}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLanguage("am")}
+              className={cn(
+                "px-2 py-0.5 text-xs font-semibold rounded transition-colors",
+                language === "am" ? "bg-white shadow text-foreground" : "text-muted-foreground"
+              )}
+            >
+              አማ
+            </button>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
 
       {open && (
@@ -73,21 +100,23 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
           </nav>
           <div className="px-4 pb-4 border-t pt-3">
             <p className="text-sm font-medium">{userName}</p>
-            <p className="text-xs text-gray-500 mb-2">{isOwner ? "Owner" : "Bartender"}</p>
+            <p className="text-xs text-gray-500 mb-2">
+              {isOwner ? t("role.owner") : t("role.bartender")}
+            </p>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => signOut({ callbackUrl: "/login" })}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Sign out
+              {t("common.signOut")}
             </Button>
           </div>
         </div>

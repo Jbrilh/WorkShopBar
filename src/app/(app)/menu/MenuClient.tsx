@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Pencil, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 
 interface Category {
@@ -41,6 +42,7 @@ interface MenuClientProps {
 
 export function MenuClient({ initialItems, initialCategories }: MenuClientProps) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [items, setItems] = useState(initialItems);
   const [categories, setCategories] = useState(initialCategories);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -142,6 +144,17 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
     }
   }
 
+  async function deleteItem(item: MenuItem) {
+    if (!confirm(t("menu.confirmDelete"))) return;
+    const res = await fetch(`/api/menu/${item.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      toast({ title: `"${item.name}" deleted` });
+    } else {
+      toast({ title: "Error deleting item", variant: "destructive" });
+    }
+  }
+
   const grouped = categories.reduce<Record<string, MenuItem[]>>((acc, cat) => {
     acc[cat.id] = items.filter((i) => i.categoryId === cat.id);
     return acc;
@@ -151,10 +164,10 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Menu Management</h1>
+        <h1 className="text-2xl font-bold">{t("menu.title")}</h1>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Item
+          {t("menu.addItem")}
         </Button>
       </div>
 
@@ -177,19 +190,22 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
                           <p className="text-xs text-muted-foreground">{item.description}</p>
                         )}
                       </div>
-                      {!item.isActive && <Badge variant="secondary">Inactive</Badge>}
+                      {!item.isActive && <Badge variant="secondary">{t("menu.inactive")}</Badge>}
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{formatCurrency(item.price)}</span>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => toggleActive(item)}>
+                      <Button variant="ghost" size="icon" onClick={() => toggleActive(item)} title={item.isActive ? t("menu.deactivate") : t("menu.activate")}>
                         {item.isActive ? (
                           <ToggleRight className="h-4 w-4 text-green-600" />
                         ) : (
                           <ToggleLeft className="h-4 w-4 text-gray-400" />
                         )}
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => deleteItem(item)} title="Delete item">
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -202,7 +218,7 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
 
       {uncategorized.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Uncategorized</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("menu.uncategorized")}</CardTitle></CardHeader>
           <CardContent>
             {uncategorized.map((item) => (
               <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
@@ -211,6 +227,9 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
                   <span className="font-semibold">{formatCurrency(item.price)}</span>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => deleteItem(item)} title="Delete item">
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
               </div>
@@ -222,21 +241,21 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Item" : "Add Menu Item"}</DialogTitle>
+            <DialogTitle>{editingItem ? t("menu.editItem") : t("menu.addMenuItem")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t("menu.name")}</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>Price ($)</Label>
+              <Label>{t("menu.price")}</Label>
               <Input type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>{t("menu.category")}</Label>
               <Select value={form.categoryId} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("menu.selectCategory")} /></SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -244,18 +263,18 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
                 </SelectContent>
               </Select>
               <Input
-                placeholder="Or type a new category name"
+                placeholder={t("menu.newCategory")}
                 value={form.newCategory}
                 onChange={(e) => setForm({ ...form, newCategory: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description (optional)</Label>
+              <Label>{t("menu.description")}</Label>
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
+              <Button type="submit" disabled={loading}>{loading ? t("common.saving") : t("common.save")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

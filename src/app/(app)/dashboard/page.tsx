@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +8,13 @@ import { DollarSign, CreditCard, AlertTriangle, ShoppingCart } from "lucide-reac
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { startOfDay } from "date-fns";
+import { T } from "@/components/ui/T";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const isOwner = session?.user?.role === "OWNER";
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "OWNER") redirect("/sales");
+  const isOwner = true;
   const today = startOfDay(new Date());
 
   const [todayRevenue, openTabsCount, lowStockItems, recentSales, todaySalesCount] =
@@ -43,11 +47,11 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold"><T k="dashboard.title" /></h1>
         <Link href="/sales/new">
           <Button>
             <ShoppingCart className="h-4 w-4 mr-2" />
-            New Sale
+            <T k="dashboard.newSale" />
           </Button>
         </Link>
       </div>
@@ -57,36 +61,36 @@ export default async function DashboardPage() {
         {isOwner && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Today&apos;s Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium"><T k="dashboard.todayRevenue" /></CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(revenue)}</div>
-              <p className="text-xs text-muted-foreground">From paid sales today</p>
+              <p className="text-xs text-muted-foreground"><T k="dashboard.todayRevenueSub" /></p>
             </CardContent>
           </Card>
         )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Sales Today</CardTitle>
+            <CardTitle className="text-sm font-medium"><T k="dashboard.salesToday" /></CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{todaySalesCount}</div>
-            <p className="text-xs text-muted-foreground">Total orders recorded</p>
+            <p className="text-xs text-muted-foreground"><T k="dashboard.salesTodaySub" /></p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Open Tabs</CardTitle>
+            <CardTitle className="text-sm font-medium"><T k="dashboard.openTabs" /></CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{openTabsCount}</div>
             <Link href="/tabs" className="text-xs text-primary hover:underline">
-              View all open tabs →
+              <T k="dashboard.viewAllTabs" />
             </Link>
           </CardContent>
         </Card>
@@ -94,13 +98,13 @@ export default async function DashboardPage() {
         {isOwner && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+              <CardTitle className="text-sm font-medium"><T k="dashboard.lowStock" /></CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{lowStockItems.length}</div>
               <Link href="/inventory" className="text-xs text-primary hover:underline">
-                View inventory →
+                <T k="dashboard.viewInventory" />
               </Link>
             </CardContent>
           </Card>
@@ -111,17 +115,17 @@ export default async function DashboardPage() {
         {/* Recent Sales */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Recent Sales</CardTitle>
+            <CardTitle className="text-base"><T k="dashboard.recentSales" /></CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentSales.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No sales yet today.</p>
+              <p className="text-sm text-muted-foreground"><T k="dashboard.noSalesToday" /></p>
             ) : (
               recentSales.map((sale) => (
                 <div key={sale.id} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">
-                      {sale.customer?.name ?? "Anonymous"}
+                      {sale.customer?.name ?? <T k="common.anonymous" />}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {sale.items.map((i) => i.menuItem.name).join(", ")}
@@ -130,14 +134,14 @@ export default async function DashboardPage() {
                   <div className="text-right">
                     <p className="text-sm font-medium">{formatCurrency(Number(sale.totalAmount))}</p>
                     <Badge variant={sale.status === "PAID" ? "success" : "warning"} className="text-xs">
-                      {sale.status}
+                      {sale.status === "PAID" ? <T k="sales.paid" /> : <T k="sales.unpaid" />}
                     </Badge>
                   </div>
                 </div>
               ))
             )}
             <Link href="/sales" className="text-xs text-primary hover:underline block pt-2">
-              View all sales →
+              <T k="dashboard.viewAllSales" />
             </Link>
           </CardContent>
         </Card>
@@ -146,23 +150,23 @@ export default async function DashboardPage() {
         {isOwner && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Low Stock Alerts</CardTitle>
+              <CardTitle className="text-base"><T k="dashboard.lowStockAlerts" /></CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {lowStockItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">All items are well stocked.</p>
+                <p className="text-sm text-muted-foreground"><T k="dashboard.wellStocked" /></p>
               ) : (
                 lowStockItems.map((item) => (
                   <div key={item.name} className="flex items-center justify-between">
                     <p className="text-sm font-medium">{item.name}</p>
                     <Badge variant={item.quantity === 0 ? "destructive" : "warning"}>
-                      {item.quantity === 0 ? "OUT" : `${item.quantity} left`}
+                      {item.quantity === 0 ? <T k="dashboard.out" /> : <>{item.quantity} <T k="dashboard.left" /></>}
                     </Badge>
                   </div>
                 ))
               )}
               <Link href="/inventory" className="text-xs text-primary hover:underline block pt-2">
-                Manage inventory →
+                <T k="dashboard.manageInventory" />
               </Link>
             </CardContent>
           </Card>
