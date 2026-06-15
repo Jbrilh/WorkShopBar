@@ -78,6 +78,11 @@ export default function NewSalePage() {
       return;
     }
 
+    if (!addToExisting && paymentMode !== "PAID" && !customerId) {
+      toast({ title: t("sales.customerRequired"), variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     try {
       if (addToExisting && openTab) {
