@@ -24,6 +24,7 @@ interface Sale {
   customer: { name: string } | null;
   user: { name: string };
   items: { quantity: number; menuItem: { name: string } }[];
+  payments: { method: string }[];
 }
 
 export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; isOwner: boolean }) {
@@ -142,6 +143,9 @@ export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; i
                   )}
                   <p className="text-xs text-muted-foreground">
                     {formatDate(sale.createdAt)} · by {sale.user.name}
+                    {sale.payments[0] && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded bg-muted font-medium">{sale.payments[0].method}</span>
+                    )}
                   </p>
                 </div>
                 <div className="text-right flex flex-col items-end gap-1">

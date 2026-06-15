@@ -27,6 +27,7 @@ const patchSchema = z.object({
   status: z.enum(["OPEN", "PAID"]).optional(),
   notes: z.string().optional(),
   addPayment: z.number().positive().optional(),
+  paymentMethod: z.enum(["CASH", "TELEBIRR", "CBE"]).default("CASH"),
   addItems: z.array(z.object({
     menuItemId: z.string(),
     quantity: z.number().int().positive(),
@@ -42,7 +43,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { status, notes, addPayment, addItems } = parsed.data;
+  const { status, notes, addPayment, paymentMethod, addItems } = parsed.data;
 
   // Add items to existing open tab
   if (addItems && addItems.length > 0) {
@@ -148,7 +149,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (paymentAmount !== null && paymentAmount > 0) {
       await tx.payment.create({
-        data: { saleId: id, amount: paymentAmount },
+        data: { saleId: id, amount: paymentAmount, method: paymentMethod },
       });
     }
 

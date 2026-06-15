@@ -18,6 +18,12 @@ enum TabStatus {
   PAID
 }
 
+enum PaymentMethod {
+  CASH
+  TELEBIRR
+  CBE
+}
+
 model User {
   id             String   @id @default(cuid())
   name           String
@@ -94,11 +100,12 @@ model Sale {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   saleId    String
-  amount    Decimal  @db.Decimal(10, 2)
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod @default(CASH)
   note      String?
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
 
   sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
 }

@@ -12,6 +12,7 @@ export default async function SalesPage() {
       customer: true,
       user: { select: { name: true } },
       items: { include: { menuItem: true } },
+      payments: { orderBy: { createdAt: "desc" }, take: 1 },
     },
     orderBy: { createdAt: "desc" },
     take: 200,

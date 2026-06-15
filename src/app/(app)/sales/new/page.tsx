@@ -34,6 +34,7 @@ interface OpenTab {
 }
 
 type PaymentMode = "PAID" | "PARTIAL" | "OPEN";
+type PaymentMethod = "CASH" | "TELEBIRR" | "CBE";
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -45,6 +46,7 @@ export default function NewSalePage() {
   const [addToExisting, setAddToExisting] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("PAID");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [partialAmount, setPartialAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -108,6 +110,7 @@ export default function NewSalePage() {
           customerId: customerId || undefined,
           status: paymentMode === "PAID" ? "PAID" : "OPEN",
           amountPaid: paymentMode === "PARTIAL" ? amountPaid : 0,
+          paymentMethod: paymentMode !== "OPEN" ? paymentMethod : undefined,
           notes: notes || undefined,
           items: cart,
         }),
@@ -257,6 +260,29 @@ export default function NewSalePage() {
                 {t("sales.openTab")}
               </button>
             </div>
+
+            {/* Payment method — shown when money is collected */}
+            {paymentMode !== "OPEN" && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{t("payment.method")}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["CASH", "TELEBIRR", "CBE"] as PaymentMethod[]).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPaymentMethod(m)}
+                      className={`py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        paymentMethod === m
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-gray-300"
+                      }`}
+                    >
+                      {t(`payment.${m.toLowerCase() as "cash" | "telebirr" | "cbe"}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {paymentMode === "PARTIAL" && (
               <div className="space-y-2 p-3 bg-blue-50 rounded-lg border border-blue-200">

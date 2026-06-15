@@ -17,6 +17,8 @@ import { useLanguage } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
 
+type PaymentMethod = "CASH" | "TELEBIRR" | "CBE";
+
 interface Props {
   saleId: string;
   remaining: number;
@@ -28,6 +30,7 @@ export function AddPaymentButton({ saleId, remaining }: Props) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("CASH");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
@@ -37,18 +40,25 @@ export function AddPaymentButton({ saleId, remaining }: Props) {
     const res = await fetch(`/api/sales/${saleId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addPayment: val }),
+      body: JSON.stringify({ addPayment: val, paymentMethod: method }),
     });
     if (res.ok) {
       toast({ title: t("customers.recordPayment") });
       setOpen(false);
       setAmount("");
+      setMethod("CASH");
       router.refresh();
     } else {
       toast({ title: t("common.error"), variant: "destructive" });
     }
     setLoading(false);
   }
+
+  const methods: { value: PaymentMethod; label: string }[] = [
+    { value: "CASH", label: t("payment.cash") },
+    { value: "TELEBIRR", label: t("payment.telebirr") },
+    { value: "CBE", label: t("payment.cbe") },
+  ];
 
   return (
     <>
@@ -57,7 +67,7 @@ export function AddPaymentButton({ saleId, remaining }: Props) {
         {t("customers.addPayment")}
       </Button>
 
-      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setAmount(""); }}>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setAmount(""); setMethod("CASH"); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("customers.recordPartialPayment")}</DialogTitle>
@@ -85,6 +95,25 @@ export function AddPaymentButton({ saleId, remaining }: Props) {
                     : `${t("customers.remainingAfterPayment")} ${formatCurrency(Math.max(0, remaining - parseFloat(amount)))}`}
                 </p>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label>{t("payment.method")}</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {methods.map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setMethod(m.value)}
+                    className={`py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                      method === m.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-gray-300"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>

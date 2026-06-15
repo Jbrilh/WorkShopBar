@@ -29,6 +29,7 @@ const createSchema = z.object({
   customerId: z.string().optional(),
   status: z.enum(["OPEN", "PAID"]).default("PAID"),
   amountPaid: z.number().min(0).default(0),
+  paymentMethod: z.enum(["CASH", "TELEBIRR", "CBE"]).default("CASH"),
   notes: z.string().optional(),
   items: z.array(
     z.object({
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { customerId, status, notes, items, amountPaid } = parsed.data;
+  const { customerId, status, notes, items, amountPaid, paymentMethod } = parsed.data;
 
   // Fetch prices server-side
   const menuItems = await prisma.menuItem.findMany({
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
     // Record initial payment if money was collected upfront
     if (finalAmountPaid > 0) {
       await tx.payment.create({
-        data: { saleId: created.id, amount: finalAmountPaid },
+        data: { saleId: created.id, amount: finalAmountPaid, method: paymentMethod },
       });
     }
 

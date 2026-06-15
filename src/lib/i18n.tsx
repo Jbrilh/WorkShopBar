@@ -68,6 +68,11 @@ const translations = {
     "sales.paid_short": "Paid",
     "sales.void": "Void",
     "sales.voiding": "Voiding...",
+    // payment methods
+    "payment.method": "Payment Method",
+    "payment.cash": "Cash",
+    "payment.telebirr": "TeleBirr",
+    "payment.cbe": "CBE",
     "sales.voidConfirm": "Void this sale and restore inventory?",
     "sales.voided": "Sale voided",
     "sales.openTabAlert": "has an open tab",
@@ -262,6 +267,11 @@ const translations = {
     "sales.paid_short": "ተከፍሏል",
     "sales.void": "ሰርዝ",
     "sales.voiding": "በሰርዛ ላይ...",
+    // payment methods
+    "payment.method": "የክፍያ ዘዴ",
+    "payment.cash": "ጥሬ ገንዘብ",
+    "payment.telebirr": "TeleBirr",
+    "payment.cbe": "CBE",
     "sales.voidConfirm": "ሽያጩን ሰርዞ ክምችቱን ይመልሳሉ?",
     "sales.voided": "ሽያጩ ተሰርዟል",
     "sales.openTabAlert": "ያልተከፈለ ሒሳብ አለ",

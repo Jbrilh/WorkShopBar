@@ -86,7 +86,10 @@ export default async function TabsPage() {
                           {sale.payments.map((p) => (
                             <div key={p.id} className="flex justify-between text-xs text-muted-foreground">
                               <span>{formatDate(p.createdAt)}</span>
-                              <span className="text-green-700 font-medium">+{formatCurrency(Number(p.amount))}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="px-1.5 py-0.5 rounded bg-muted font-medium">{p.method}</span>
+                                <span className="text-green-700 font-medium">+{formatCurrency(Number(p.amount))}</span>
+                              </div>
                             </div>
                           ))}
                         </div>
