@@ -20,6 +20,7 @@ interface Sale {
   totalAmount: number;
   amountPaid: number;
   createdAt: string;
+  notes: string | null;
   customer: { name: string } | null;
   user: { name: string };
   items: { quantity: number; menuItem: { name: string } }[];
@@ -136,6 +137,9 @@ export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; i
                   <p className="text-xs text-muted-foreground">
                     {sale.items.map((i) => `${i.quantity}x ${i.menuItem.name}`).join(", ")}
                   </p>
+                  {sale.notes && (
+                    <p className="text-xs text-muted-foreground italic">{sale.notes}</p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     {formatDate(sale.createdAt)} · by {sale.user.name}
                   </p>
