@@ -181,6 +181,9 @@ const translations = {
     "inventory.trackingRemoved": "Tracking removed",
     "inventory.stockUpdated": "Stock updated",
     "inventory.itemAdded": "Item added to inventory",
+    "inventory.categories": "Categories",
+    "inventory.newCategoryName": "New category name...",
+    "inventory.categoryAdded": "Category added",
     // analytics
     "analytics.title": "Analytics",
     "analytics.daily": "Daily",
@@ -381,6 +384,9 @@ const translations = {
     "inventory.trackingRemoved": "ክትትል ተወግዷል",
     "inventory.stockUpdated": "ክምችት ተዘምኗል",
     "inventory.itemAdded": "ዕቃ ወደ ክምችት ተጨምሯል",
+    "inventory.categories": "ምድቦች",
+    "inventory.newCategoryName": "አዲስ ምድብ ስም...",
+    "inventory.categoryAdded": "ምድብ ተጨምሯል",
     // analytics
     "analytics.title": "ትንታኔ",
     "analytics.daily": "ዕለታዊ",

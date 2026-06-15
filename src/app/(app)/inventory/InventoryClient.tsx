@@ -33,6 +33,7 @@ interface InventoryItem {
   menuItem: {
     id: string;
     name: string;
+    price: number;
     category: { name: string } | null;
   };
 }
@@ -55,8 +56,13 @@ export function InventoryClient({ initialItems, categories }: Props) {
 
   // Edit dialog
   const [editing, setEditing] = useState<InventoryItem | null>(null);
-  const [editForm, setEditForm] = useState({ quantity: "", unit: "", lowThreshold: "" });
+  const [editForm, setEditForm] = useState({ name: "", price: "", quantity: "", unit: "", lowThreshold: "" });
   const [editLoading, setEditLoading] = useState(false);
+
+  // Category management
+  const [cats, setCats] = useState(categories);
+  const [newCatName, setNewCatName] = useState("");
+  const [catLoading, setCatLoading] = useState(false);
 
   // Add dialog
   const [addOpen, setAddOpen] = useState(false);
@@ -65,7 +71,13 @@ export function InventoryClient({ initialItems, categories }: Props) {
 
   function openEdit(item: InventoryItem) {
     setEditing(item);
-    setEditForm({ quantity: String(item.quantity), unit: item.unit, lowThreshold: String(item.lowThreshold) });
+    setEditForm({
+      name: item.menuItem.name,
+      price: String(item.menuItem.price),
+      quantity: String(item.quantity),
+      unit: item.unit,
+      lowThreshold: String(item.lowThreshold),
+    });
   }
 
   async function handleSave() {
@@ -75,6 +87,8 @@ export function InventoryClient({ initialItems, categories }: Props) {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        name: editForm.name,
+        price: parseFloat(editForm.price),
         quantity: parseInt(editForm.quantity),
         unit: editForm.unit,
         lowThreshold: parseInt(editForm.lowThreshold),
@@ -100,6 +114,25 @@ export function InventoryClient({ initialItems, categories }: Props) {
     } else {
       toast({ title: t("common.error"), variant: "destructive" });
     }
+  }
+
+  async function handleAddCategory() {
+    if (!newCatName.trim()) return;
+    setCatLoading(true);
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newCatName.trim() }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setCats((prev) => [...prev, created]);
+      setNewCatName("");
+      toast({ title: t("inventory.categoryAdded") });
+    } else {
+      toast({ title: t("common.error"), variant: "destructive" });
+    }
+    setCatLoading(false);
   }
 
   async function handleAdd() {
@@ -240,20 +273,32 @@ export function InventoryClient({ initialItems, categories }: Props) {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("inventory.adjustStock")} — {editing?.menuItem.name}</DialogTitle>
+            <DialogTitle>{t("inventory.adjustStock")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t("inventory.currentQty")}</Label>
-              <Input type="number" min="0" value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t("menu.name")}</Label>
+                <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("menu.price")}</Label>
+                <Input type="number" min="0" step="0.01" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>{t("inventory.unitLabel")}</Label>
-              <Input value={editForm.unit} onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("inventory.lowThreshold")}</Label>
-              <Input type="number" min="0" value={editForm.lowThreshold} onChange={(e) => setEditForm({ ...editForm, lowThreshold: e.target.value })} />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>{t("inventory.currentQty")}</Label>
+                <Input type="number" min="0" value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("inventory.unitLabel")}</Label>
+                <Input value={editForm.unit} onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("inventory.lowThreshold")}</Label>
+                <Input type="number" min="0" value={editForm.lowThreshold} onChange={(e) => setEditForm({ ...editForm, lowThreshold: e.target.value })} />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -262,6 +307,33 @@ export function InventoryClient({ initialItems, categories }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Categories */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base">{t("inventory.categories")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {cats.map((c) => (
+              <span key={c.id} className="px-3 py-1 rounded-full bg-muted text-sm font-medium">{c.name}</span>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Input
+              placeholder={t("inventory.newCategoryName")}
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+              className="max-w-xs"
+            />
+            <Button onClick={handleAddCategory} disabled={catLoading || !newCatName.trim()} size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              {catLoading ? t("common.saving") : t("common.add")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Add dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -295,7 +367,7 @@ export function InventoryClient({ initialItems, categories }: Props) {
                 <Select value={addForm.categoryId} onValueChange={(v) => setAddForm({ ...addForm, categoryId: v })}>
                   <SelectTrigger><SelectValue placeholder={t("menu.selectCategory")} /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
+                    {cats.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>

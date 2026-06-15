@@ -54,12 +54,11 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
     price: "",
     description: "",
     categoryId: "",
-    newCategory: "",
   });
 
   function openCreate() {
     setEditingItem(null);
-    setForm({ name: "", price: "", description: "", categoryId: "", newCategory: "" });
+    setForm({ name: "", price: "", description: "", categoryId: "" });
     setDialogOpen(true);
   }
 
@@ -70,7 +69,6 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
       price: String(item.price),
       description: item.description ?? "",
       categoryId: item.categoryId ?? "",
-      newCategory: "",
     });
     setDialogOpen(true);
   }
@@ -80,26 +78,11 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
     setLoading(true);
 
     try {
-      let categoryId = form.categoryId;
-
-      // Create new category if provided
-      if (form.newCategory.trim()) {
-        const res = await fetch("/api/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: form.newCategory.trim() }),
-        });
-        if (!res.ok) throw new Error("Failed to create category");
-        const newCat = await res.json();
-        setCategories((prev) => [...prev, newCat]);
-        categoryId = newCat.id;
-      }
-
       const payload = {
         name: form.name,
         price: parseFloat(form.price),
         description: form.description || null,
-        categoryId: categoryId || null,
+        categoryId: form.categoryId || null,
       };
 
       if (editingItem) {
@@ -262,11 +245,6 @@ export function MenuClient({ initialItems, initialCategories }: MenuClientProps)
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                placeholder={t("menu.newCategory")}
-                value={form.newCategory}
-                onChange={(e) => setForm({ ...form, newCategory: e.target.value })}
-              />
             </div>
             <div className="space-y-2">
               <Label>{t("menu.description")}</Label>

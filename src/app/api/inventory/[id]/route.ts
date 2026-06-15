@@ -8,6 +8,8 @@ const patchSchema = z.object({
   delta: z.number().int().optional(),
   unit: z.string().optional(),
   lowThreshold: z.number().int().min(0).optional(),
+  name: z.string().min(1).optional(),
+  price: z.number().positive().optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,22 +22,31 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { quantity, delta, unit, lowThreshold } = parsed.data;
+  const { quantity, delta, unit, lowThreshold, name, price } = parsed.data;
 
-  const updateData: Record<string, unknown> = {};
-  if (unit !== undefined) updateData.unit = unit;
-  if (lowThreshold !== undefined) updateData.lowThreshold = lowThreshold;
+  const invData: Record<string, unknown> = {};
+  if (unit !== undefined) invData.unit = unit;
+  if (lowThreshold !== undefined) invData.lowThreshold = lowThreshold;
+  if (quantity !== undefined) invData.quantity = quantity;
+  else if (delta !== undefined) invData.quantity = { increment: delta };
 
-  if (quantity !== undefined) {
-    updateData.quantity = quantity;
-  } else if (delta !== undefined) {
-    updateData.quantity = { increment: delta };
-  }
+  const menuItemData: Record<string, unknown> = {};
+  if (name !== undefined) menuItemData.name = name;
+  if (price !== undefined) menuItemData.price = price;
 
-  const item = await prisma.inventoryItem.update({
-    where: { id },
-    data: updateData,
-    include: { menuItem: { include: { category: true } } },
+  const item = await prisma.$transaction(async (tx) => {
+    const inv = await tx.inventoryItem.update({
+      where: { id },
+      data: invData,
+      select: { menuItemId: true },
+    });
+    if (Object.keys(menuItemData).length > 0) {
+      await tx.menuItem.update({ where: { id: inv.menuItemId }, data: menuItemData });
+    }
+    return tx.inventoryItem.findUnique({
+      where: { id },
+      include: { menuItem: { include: { category: true } } },
+    });
   });
 
   return NextResponse.json(item);
