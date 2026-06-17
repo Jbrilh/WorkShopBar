@@ -37,7 +37,7 @@ interface Summary {
 export default function InventoryReportPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [date, setDate] = useState(format(subDays(new Date(), 1), "yyyy-MM-dd"));
+  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<ReportItem[] | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -71,13 +71,29 @@ export default function InventoryReportPage() {
           <div className="flex flex-wrap gap-3 items-end">
             <div className="space-y-1">
               <p className="text-sm font-medium">{t("inventory.selectDate")}</p>
-              <Input
-                type="date"
-                value={date}
-                max={format(new Date(), "yyyy-MM-dd")}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-48"
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  value={date}
+                  max={format(new Date(), "yyyy-MM-dd")}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-44"
+                />
+                <button
+                  type="button"
+                  onClick={() => setDate(format(new Date(), "yyyy-MM-dd"))}
+                  className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(new Date(), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDate(format(subDays(new Date(), 1), "yyyy-MM-dd"))}
+                  className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(subDays(new Date(), 1), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
+                >
+                  Yesterday
+                </button>
+              </div>
             </div>
             <Button onClick={loadReport} disabled={loading}>
               <BarChart2 className="h-4 w-4 mr-2" />
