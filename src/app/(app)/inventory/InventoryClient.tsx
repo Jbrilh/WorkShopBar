@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
-import { Edit2, Trash2, Plus } from "lucide-react";
+import { Edit2, Trash2, Plus, PackagePlus } from "lucide-react";
 
 interface Category {
   id: string;
@@ -63,6 +63,11 @@ export function InventoryClient({ initialItems, categories }: Props) {
   const [cats, setCats] = useState(categories);
   const [newCatName, setNewCatName] = useState("");
   const [catLoading, setCatLoading] = useState(false);
+
+  // Add Stock dialog
+  const [restocking, setRestocking] = useState<InventoryItem | null>(null);
+  const [restockQty, setRestockQty] = useState("");
+  const [restockLoading, setRestockLoading] = useState(false);
 
   // Add dialog
   const [addOpen, setAddOpen] = useState(false);
@@ -114,6 +119,28 @@ export function InventoryClient({ initialItems, categories }: Props) {
     } else {
       toast({ title: t("common.error"), variant: "destructive" });
     }
+  }
+
+  async function handleRestock() {
+    if (!restocking) return;
+    const qty = parseInt(restockQty);
+    if (!qty || qty <= 0) return;
+    setRestockLoading(true);
+    const res = await fetch(`/api/inventory/${restocking.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restock: qty }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setItems((prev) => prev.map((i) => (i.id === restocking.id ? updated : i)));
+      toast({ title: t("inventory.stockAdded") });
+      setRestocking(null);
+      setRestockQty("");
+    } else {
+      toast({ title: t("common.error"), variant: "destructive" });
+    }
+    setRestockLoading(false);
   }
 
   async function handleAddCategory() {
@@ -206,6 +233,9 @@ export function InventoryClient({ initialItems, categories }: Props) {
                         <p className="text-xs text-muted-foreground mt-1">{t("inventory.lowAt")}: {item.lowThreshold}</p>
                       </div>
                       <div className="flex gap-1 ml-2 shrink-0">
+                        <Button variant="ghost" size="icon" title={t("inventory.addStock")} onClick={() => { setRestocking(item); setRestockQty(""); }}>
+                          <PackagePlus className="h-4 w-4 text-green-600" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -250,6 +280,9 @@ export function InventoryClient({ initialItems, categories }: Props) {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" title={t("inventory.addStock")} onClick={() => { setRestocking(item); setRestockQty(""); }}>
+                                <PackagePlus className="h-4 w-4 text-green-600" />
+                              </Button>
                               <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
                                 <Edit2 className="h-4 w-4" />
                               </Button>
@@ -268,6 +301,39 @@ export function InventoryClient({ initialItems, categories }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Stock dialog */}
+      <Dialog open={!!restocking} onOpenChange={(o) => { if (!o) { setRestocking(null); setRestockQty(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("inventory.addStock")} — {restocking?.menuItem.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {t("inventory.currentQty")}: <span className="font-semibold text-foreground">{restocking?.quantity} {restocking?.unit}</span>
+            </p>
+            <div className="space-y-2">
+              <Label>{t("inventory.howManyAdding")}</Label>
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="0"
+                value={restockQty}
+                onChange={(e) => setRestockQty(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestocking(null)}>{t("common.cancel")}</Button>
+            <Button onClick={handleRestock} disabled={restockLoading || !restockQty || parseInt(restockQty) <= 0}>
+              <PackagePlus className="h-4 w-4 mr-1" />
+              {restockLoading ? t("common.saving") : t("inventory.addStock")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>

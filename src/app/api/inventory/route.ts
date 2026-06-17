@@ -34,13 +34,20 @@ export async function POST(request: Request) {
 
   const { name, price, categoryId, quantity, unit, lowThreshold } = parsed.data;
 
-  const menuItem = await prisma.menuItem.create({
-    data: { name, price, categoryId: categoryId ?? null, isActive: true },
-  });
-
-  const item = await prisma.inventoryItem.create({
-    data: { menuItemId: menuItem.id, quantity, unit, lowThreshold },
-    include: { menuItem: { include: { category: true } } },
+  const item = await prisma.$transaction(async (tx) => {
+    const menuItem = await tx.menuItem.create({
+      data: { name, price, categoryId: categoryId ?? null, isActive: true },
+    });
+    const inv = await tx.inventoryItem.create({
+      data: { menuItemId: menuItem.id, quantity, unit, lowThreshold },
+      include: { menuItem: { include: { category: true } } },
+    });
+    if (quantity > 0) {
+      await tx.stockRestock.create({
+        data: { inventoryItemId: inv.id, quantity, note: "Initial stock" },
+      });
+    }
+    return inv;
   });
 
   return NextResponse.json(item, { status: 201 });

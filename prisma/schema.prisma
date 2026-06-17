@@ -78,7 +78,18 @@ model InventoryItem {
   lowThreshold Int      @default(5)
   updatedAt    DateTime @updatedAt
 
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem       @relation(fields: [menuItemId], references: [id])
+  restocks StockRestock[]
+}
+
+model StockRestock {
+  id              String        @id @default(cuid())
+  inventoryItemId String
+  quantity        Int
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
 }
 
 model Sale {

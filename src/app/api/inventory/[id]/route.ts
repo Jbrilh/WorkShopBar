@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 const patchSchema = z.object({
   quantity: z.number().int().min(0).optional(),
   delta: z.number().int().optional(),
+  restock: z.number().int().positive().optional(),
   unit: z.string().optional(),
   lowThreshold: z.number().int().min(0).optional(),
   name: z.string().min(1).optional(),
@@ -22,12 +23,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { quantity, delta, unit, lowThreshold, name, price } = parsed.data;
+  const { quantity, delta, restock, unit, lowThreshold, name, price } = parsed.data;
 
   const invData: Record<string, unknown> = {};
   if (unit !== undefined) invData.unit = unit;
   if (lowThreshold !== undefined) invData.lowThreshold = lowThreshold;
-  if (quantity !== undefined) invData.quantity = quantity;
+  if (restock !== undefined) invData.quantity = { increment: restock };
+  else if (quantity !== undefined) invData.quantity = quantity;
   else if (delta !== undefined) invData.quantity = { increment: delta };
 
   const menuItemData: Record<string, unknown> = {};
@@ -42,6 +44,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     if (Object.keys(menuItemData).length > 0) {
       await tx.menuItem.update({ where: { id: inv.menuItemId }, data: menuItemData });
+    }
+    if (restock !== undefined) {
+      await tx.stockRestock.create({ data: { inventoryItemId: id, quantity: restock } });
     }
     return tx.inventoryItem.findUnique({
       where: { id },
