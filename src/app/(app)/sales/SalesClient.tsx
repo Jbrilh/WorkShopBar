@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { format, subDays } from "date-fns";
 import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,36 +131,26 @@ export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; i
         </Link>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="py-3 px-4 flex items-center gap-3">
-            <ShoppingBag className="h-5 w-5 text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">{dateSales ? t("sales.all") : t("sales.todaySales")}</p>
-              <p className="text-xl font-bold">{displayStats.count}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="py-3 px-4 flex items-center gap-3">
-            <Package className="h-5 w-5 text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">{dateSales ? t("sales.todayItems") : t("sales.todayItems")}</p>
-              <p className="text-xl font-bold">{displayStats.items}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="py-3 px-4 flex items-center gap-3">
-            <TrendingUp className="h-5 w-5 text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">{dateSales ? t("sales.todayRevenue") : t("sales.todayRevenue")}</p>
-              <p className="text-xl font-bold">{formatCurrency(displayStats.revenue)}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base">{dateSales ? filterDate : t("sales.todaySales")}</CardTitle>
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-muted-foreground">{displayStats.count} {t("sales.all").toLowerCase()}</span>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5"><Package className="h-3.5 w-3.5" />{t("sales.todayItems")}</span>
+            <span className="text-sm font-semibold">{displayStats.items}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />{t("sales.todayRevenue")}</span>
+            <span className="text-sm font-semibold">{formatCurrency(displayStats.revenue)}</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Date filter */}
       <Card>
