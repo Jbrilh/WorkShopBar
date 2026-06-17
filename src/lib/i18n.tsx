@@ -84,6 +84,8 @@ const translations = {
     "sales.todaySales": "Sales Today",
     "sales.todayItems": "Items Sold Today",
     "sales.todayRevenue": "Revenue Today",
+    "sales.showAll": "Show All",
+    "sales.noSalesDate": "No sales on this date",
     // customers
     "customers.title": "Customers",
     "customers.addCustomer": "Add Customer",
@@ -303,6 +305,8 @@ const translations = {
     "sales.todaySales": "ዛሬ ሽያጮች",
     "sales.todayItems": "ዛሬ የተሸጡ ዕቃዎች",
     "sales.todayRevenue": "የዛሬ ገቢ",
+    "sales.showAll": "ሁሉንም አሳይ",
+    "sales.noSalesDate": "በዚህ ቀን ሽያጭ የለም",
     // customers
     "customers.title": "ደንበኞች",
     "customers.addCustomer": "ደንበኛ ጨምር",
