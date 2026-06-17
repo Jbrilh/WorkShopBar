@@ -43,10 +43,11 @@ export default function InventoryReportPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [reportDate, setReportDate] = useState("");
 
-  async function loadReport() {
+  async function loadReport(dateOverride?: string) {
+    const targetDate = dateOverride ?? date;
     setLoading(true);
     try {
-      const res = await fetch(`/api/inventory/report?date=${date}`);
+      const res = await fetch(`/api/inventory/report?date=${targetDate}`);
       if (!res.ok) throw new Error("Failed to load report");
       const data = await res.json();
       setItems(data.items);
@@ -81,14 +82,14 @@ export default function InventoryReportPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setDate(format(new Date(), "yyyy-MM-dd"))}
+                  onClick={() => { const d = format(new Date(), "yyyy-MM-dd"); setDate(d); loadReport(d); }}
                   className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(new Date(), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
                 >
                   Today
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDate(format(subDays(new Date(), 1), "yyyy-MM-dd"))}
+                  onClick={() => { const d = format(subDays(new Date(), 1), "yyyy-MM-dd"); setDate(d); loadReport(d); }}
                   className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(subDays(new Date(), 1), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
                 >
                   Yesterday
