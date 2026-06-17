@@ -66,7 +66,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1">
         {visibleItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/inventory" && pathname.startsWith(item.href)) || (item.href === "/inventory" && (pathname === "/inventory" || (pathname.startsWith("/inventory/") && !pathname.startsWith("/inventory/report"))));
           return (
             <Link
               key={item.href}
