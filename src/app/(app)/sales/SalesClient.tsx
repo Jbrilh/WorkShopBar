@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingBag, Package, TrendingUp } from "lucide-react";
 import { MarkPaidButton } from "../customers/[id]/MarkPaidButton";
 import { VoidSaleButton } from "./VoidSaleButton";
 import { useLanguage } from "@/lib/i18n";
@@ -72,6 +72,19 @@ export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; i
     open: sales.filter((s) => s.status === "OPEN").length,
   }), [sales]);
 
+  const todayStats = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    if (now.getHours() < 6) start.setDate(start.getDate() - 1);
+    start.setHours(6, 0, 0, 0);
+    const todaySales = sales.filter((s) => new Date(s.createdAt) >= start);
+    return {
+      count: todaySales.length,
+      items: todaySales.reduce((sum, s) => sum + s.items.reduce((q, i) => q + i.quantity, 0), 0),
+      revenue: todaySales.reduce((sum, s) => sum + Number(s.amountPaid), 0),
+    };
+  }, [sales]);
+
   const lastMethod = selected?.payments[selected.payments.length - 1]?.method;
 
   return (
@@ -84,6 +97,37 @@ export function SalesClient({ initialSales, isOwner }: { initialSales: Sale[]; i
             {t("sales.newSale")}
           </Button>
         </Link>
+      </div>
+
+      {/* Today summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card>
+          <CardContent className="py-3 px-4 flex items-center gap-3">
+            <ShoppingBag className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">{t("sales.todaySales")}</p>
+              <p className="text-xl font-bold">{todayStats.count}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3 px-4 flex items-center gap-3">
+            <Package className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">{t("sales.todayItems")}</p>
+              <p className="text-xl font-bold">{todayStats.items}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3 px-4 flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">{t("sales.todayRevenue")}</p>
+              <p className="text-xl font-bold">{formatCurrency(todayStats.revenue)}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}

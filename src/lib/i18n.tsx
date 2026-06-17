@@ -81,6 +81,9 @@ const translations = {
     "sales.addToExistingTab": "Add to existing tab",
     "sales.newTab": "New tab",
     "sales.addingToTab": "Adding to tab...",
+    "sales.todaySales": "Sales Today",
+    "sales.todayItems": "Items Sold Today",
+    "sales.todayRevenue": "Revenue Today",
     // customers
     "customers.title": "Customers",
     "customers.addCustomer": "Add Customer",
@@ -297,6 +300,9 @@ const translations = {
     "sales.addToExistingTab": "ወደ ነባር ሒሳብ ጨምር",
     "sales.newTab": "አዲስ ሒሳብ",
     "sales.addingToTab": "ወደ ሒሳብ በመጨመር ላይ...",
+    "sales.todaySales": "ዛሬ ሽያጮች",
+    "sales.todayItems": "ዛሬ የተሸጡ ዕቃዎች",
+    "sales.todayRevenue": "የዛሬ ገቢ",
     // customers
     "customers.title": "ደንበኞች",
     "customers.addCustomer": "ደንበኛ ጨምር",
