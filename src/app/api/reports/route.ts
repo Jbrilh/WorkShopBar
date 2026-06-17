@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { startOfDay, subDays } from "date-fns";
+import { subDays } from "date-fns";
+
+function businessDayStart(date: Date): Date {
+  const d = new Date(date);
+  // Bar closes at 6am — if before 6am, the business day started yesterday at 6am
+  if (d.getHours() < 6) d.setDate(d.getDate() - 1);
+  d.setHours(6, 0, 0, 0);
+  return d;
+}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -12,9 +20,10 @@ export async function GET(request: Request) {
   const range = searchParams.get("range") ?? "weekly";
 
   const now = new Date();
+  const todayStart = businessDayStart(now);
   const since = range === "daily"
-    ? startOfDay(now)
-    : startOfDay(subDays(now, 6));
+    ? todayStart
+    : businessDayStart(subDays(now, 6));
 
   // Revenue = cash collected (amountPaid), grouped by service date (createdAt)
   type RevenueRow = { label: string; amount: string };

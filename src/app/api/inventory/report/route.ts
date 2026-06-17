@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { startOfDay, endOfDay } from "date-fns";
-
 interface ReportRow {
   invId: string;
   name: string;
@@ -29,8 +27,11 @@ export async function GET(request: Request) {
   const parsed = new Date(dateParam);
   if (isNaN(parsed.getTime())) return NextResponse.json({ error: "Invalid date" }, { status: 400 });
 
-  const start = startOfDay(parsed);
-  const end = endOfDay(parsed);
+  // Business day runs 6am → 6am (bar closes at 6am, not midnight)
+  const start = new Date(parsed);
+  start.setHours(6, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
 
   const rows = await prisma.$queryRaw<ReportRow[]>`
     SELECT
@@ -52,36 +53,36 @@ export async function GET(request: Request) {
       SELECT si."menuItemId", SUM(si.quantity)::int AS qty
       FROM "SaleItem" si
       JOIN "Sale" s ON si."saleId" = s.id
-      WHERE s."createdAt" >= ${start} AND s."createdAt" <= ${end}
+      WHERE s."createdAt" >= ${start} AND s."createdAt" < ${end}
       GROUP BY si."menuItemId"
     ) sold_on ON sold_on."menuItemId" = mi.id
     LEFT JOIN (
       SELECT si."menuItemId", SUM(si.quantity)::int AS qty
       FROM "SaleItem" si
       JOIN "Sale" s ON si."saleId" = s.id
-      WHERE s."createdAt" > ${end}
+      WHERE s."createdAt" >= ${end}
       GROUP BY si."menuItemId"
     ) sold_after ON sold_after."menuItemId" = mi.id
     LEFT JOIN (
       SELECT sr."inventoryItemId", SUM(sr.quantity)::int AS qty
       FROM "StockRestock" sr
-      WHERE sr."createdAt" >= ${start} AND sr."createdAt" <= ${end}
+      WHERE sr."createdAt" >= ${start} AND sr."createdAt" < ${end}
       GROUP BY sr."inventoryItemId"
     ) rst_on ON rst_on."inventoryItemId" = ii.id
     LEFT JOIN (
       SELECT sr."inventoryItemId", SUM(sr.quantity)::int AS qty
       FROM "StockRestock" sr
-      WHERE sr."createdAt" > ${end}
+      WHERE sr."createdAt" >= ${end}
       GROUP BY sr."inventoryItemId"
     ) rst_after ON rst_after."inventoryItemId" = ii.id
-    WHERE mi."createdAt" <= ${end}
+    WHERE mi."createdAt" < ${end}
     ORDER BY cat.name NULLS LAST, mi.name
   `;
 
   const items = rows.map((row) => {
     const closingQty = row.currentQty - row.restockedAfterDay + row.soldAfterDay;
     const openingQty = closingQty - row.restockedOnDay + row.soldOnDay;
-    const isNewItem = new Date(row.itemCreatedAt) >= start;
+    const isNewItem = new Date(row.itemCreatedAt) >= start && new Date(row.itemCreatedAt) < end;
     return {
       invId: row.invId,
       name: row.name,

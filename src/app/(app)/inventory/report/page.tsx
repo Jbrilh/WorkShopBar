@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { format, subDays } from "date-fns";
+
+// Bar closes at 6am — before 6am the current business day is still "yesterday"
+function currentBusinessDay() {
+  const now = new Date();
+  return now.getHours() < 6 ? subDays(now, 1) : now;
+}
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +43,7 @@ interface Summary {
 export default function InventoryReportPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [date, setDate] = useState(format(currentBusinessDay(), "yyyy-MM-dd"));
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<ReportItem[] | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -76,27 +82,27 @@ export default function InventoryReportPage() {
                 <Input
                   type="date"
                   value={date}
-                  max={format(new Date(), "yyyy-MM-dd")}
+                  max={format(currentBusinessDay(), "yyyy-MM-dd")}
                   onChange={(e) => setDate(e.target.value)}
                   className="w-44"
                 />
                 <button
                   type="button"
-                  onClick={() => { const d = format(new Date(), "yyyy-MM-dd"); setDate(d); loadReport(d); }}
-                  className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(new Date(), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
+                  onClick={() => { const d = format(currentBusinessDay(), "yyyy-MM-dd"); setDate(d); loadReport(d); }}
+                  className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(currentBusinessDay(), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
                 >
                   Today
                 </button>
                 <button
                   type="button"
-                  onClick={() => { const d = format(subDays(new Date(), 1), "yyyy-MM-dd"); setDate(d); loadReport(d); }}
-                  className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(subDays(new Date(), 1), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
+                  onClick={() => { const d = format(subDays(currentBusinessDay(), 1), "yyyy-MM-dd"); setDate(d); loadReport(d); }}
+                  className={`px-3 py-1.5 rounded-md text-sm border font-medium transition-colors ${date === format(subDays(currentBusinessDay(), 1), "yyyy-MM-dd") ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-gray-400"}`}
                 >
                   Yesterday
                 </button>
               </div>
             </div>
-            <Button onClick={loadReport} disabled={loading}>
+            <Button onClick={() => loadReport()} disabled={loading}>
               <BarChart2 className="h-4 w-4 mr-2" />
               {loading ? t("common.loading") : t("inventory.viewReport")}
             </Button>
