@@ -13,6 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 
 interface ReportData {
   revenue: { label: string; amount: number }[];
@@ -31,19 +32,6 @@ function toDateStr(d: Date) {
   return format(d, "yyyy-MM-dd");
 }
 
-function downloadCSV(filename: string, headers: string[], rows: string[][]) {
-  const escape = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
-  const lines = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
-  const blob = new Blob(["﻿" + lines], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
 export function ReportsClient() {
   const today = toDateStr(businessDay(new Date()));
@@ -54,8 +42,7 @@ export function ReportsClient() {
   const [toDate, setToDate] = useState(today);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dlSales, setDlSales] = useState(false);
-  const [dlInv, setDlInv] = useState(false);
+  const [dlLoading, setDlLoading] = useState(false);
   const { toast } = useToast();
 
   function fetchData(m: typeof mode, from?: string, to?: string) {
@@ -88,77 +75,75 @@ export function ReportsClient() {
     fetchData("custom", fromDate, toDate);
   }
 
-  async function downloadSales() {
-    setDlSales(true);
+  async function downloadExcel() {
+    setDlLoading(true);
     try {
       const from = mode === "daily" ? today : fromDate;
       const to = toDate;
-      const res = await fetch(`/api/reports/export?from=${from}&to=${to}`);
-      if (!res.ok) throw new Error();
+
+      const [salesRes, invRes] = await Promise.all([
+        fetch(`/api/reports/export?from=${from}&to=${to}`),
+        fetch(`/api/inventory/report?date=${to}`),
+      ]);
+      if (!salesRes.ok || !invRes.ok) throw new Error();
+
       const sales: {
-        createdAt: string;
-        status: string;
-        totalAmount: number;
-        amountPaid: number;
-        notes: string | null;
-        customer: { name: string } | null;
-        user: { name: string };
+        createdAt: string; status: string; totalAmount: number; amountPaid: number;
+        notes: string | null; customer: { name: string } | null; user: { name: string };
         items: { quantity: number; subtotal: number; menuItem: { name: string; price: number } }[];
         payments: { method: string; amount: number }[];
-      }[] = await res.json();
+      }[] = await salesRes.json();
 
-      const headers = ["Date", "Time", "Customer", "Items", "Unit Prices (ETB)", "Total (ETB)", "Paid (ETB)", "Owed (ETB)", "Payment Method", "Status", "Notes"];
-      const rows = sales.map((s) => [
-        new Date(s.createdAt).toLocaleDateString(),
-        new Date(s.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        s.customer?.name ?? "Anonymous",
-        s.items.map((i) => `${i.quantity}× ${i.menuItem.name}`).join("; "),
-        s.items.map((i) => `${i.menuItem.name}: ${i.menuItem.price}`).join("; "),
-        String(Number(s.totalAmount)),
-        String(Number(s.amountPaid)),
-        String(Math.max(0, Number(s.totalAmount) - Number(s.amountPaid))),
-        s.payments.map((p) => p.method).join("; ") || "-",
-        s.status,
-        s.notes ?? "",
-      ]);
-      downloadCSV(`sales_${from}_to_${to}.csv`, headers, rows);
-    } catch {
-      toast({ title: "Download failed", variant: "destructive" });
-    } finally {
-      setDlSales(false);
-    }
-  }
-
-  async function downloadInventory() {
-    setDlInv(true);
-    try {
-      const date = toDate;
-      const res = await fetch(`/api/inventory/report?date=${date}`);
-      if (!res.ok) throw new Error();
-      const { items }: {
+      const { items: invItems }: {
         items: {
           name: string; categoryName: string | null; unit: string;
           openingQty: number; restockedOnDay: number; soldOnDay: number;
           closingQty: number; lowThreshold: number;
         }[];
-      } = await res.json();
+      } = await invRes.json();
 
-      const headers = ["Item", "Category", "Unit", "Opening", "Restocked", "Sold", "Closing", "Status"];
-      const rows = items.map((i) => [
-        i.name,
-        i.categoryName ?? "-",
-        i.unit,
-        String(i.openingQty),
-        String(i.restockedOnDay),
-        String(i.soldOnDay),
-        String(i.closingQty),
-        i.closingQty === 0 ? "OUT" : i.closingQty <= i.lowThreshold ? "LOW" : "OK",
-      ]);
-      downloadCSV(`inventory_${date}.csv`, headers, rows);
+      const wb = XLSX.utils.book_new();
+
+      // Sales sheet
+      const salesRows = [
+        ["Date", "Time", "Customer", "Items", "Unit Prices (ETB)", "Total (ETB)", "Paid (ETB)", "Owed (ETB)", "Payment Method", "Status", "Notes"],
+        ...sales.map((s) => [
+          new Date(s.createdAt).toLocaleDateString(),
+          new Date(s.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          s.customer?.name ?? "Anonymous",
+          s.items.map((i) => `${i.quantity}× ${i.menuItem.name}`).join("; "),
+          s.items.map((i) => `${i.menuItem.name}: ETB ${i.menuItem.price}`).join("; "),
+          Number(s.totalAmount),
+          Number(s.amountPaid),
+          Math.max(0, Number(s.totalAmount) - Number(s.amountPaid)),
+          s.payments.map((p) => p.method).join("; ") || "-",
+          s.status,
+          s.notes ?? "",
+        ]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(salesRows), "Sales");
+
+      // Inventory sheet
+      const invRows = [
+        ["Item", "Category", "Unit", "Opening", "Restocked", "Sold", "Closing", "Status"],
+        ...invItems.map((i) => [
+          i.name,
+          i.categoryName ?? "-",
+          i.unit,
+          i.openingQty,
+          i.restockedOnDay,
+          i.soldOnDay,
+          i.closingQty,
+          i.closingQty === 0 ? "OUT" : i.closingQty <= i.lowThreshold ? "LOW" : "OK",
+        ]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(invRows), "Inventory");
+
+      XLSX.writeFile(wb, `workshopbar_${from}_to_${to}.xlsx`);
     } catch {
       toast({ title: "Download failed", variant: "destructive" });
     } finally {
-      setDlInv(false);
+      setDlLoading(false);
     }
   }
 
@@ -287,18 +272,12 @@ export function ReportsClient() {
           <CardTitle className="text-base">Download Reports</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={downloadSales} disabled={dlSales}>
-              <Download className="h-4 w-4 mr-2" />
-              {dlSales ? "Preparing..." : `Sales CSV (${rangeLabel})`}
-            </Button>
-            <Button variant="outline" onClick={downloadInventory} disabled={dlInv}>
-              <Download className="h-4 w-4 mr-2" />
-              {dlInv ? "Preparing..." : `Inventory CSV (${toDate})`}
-            </Button>
-          </div>
+          <Button variant="outline" onClick={downloadExcel} disabled={dlLoading}>
+            <Download className="h-4 w-4 mr-2" />
+            {dlLoading ? "Preparing..." : `Download Excel — ${rangeLabel}`}
+          </Button>
           <p className="text-xs text-muted-foreground">
-            Sales CSV covers the selected date range. Inventory CSV is a snapshot for the end date.
+            Downloads a single .xlsx file with two sheets: Sales (date range) and Inventory (end date snapshot).
           </p>
         </CardContent>
       </Card>
